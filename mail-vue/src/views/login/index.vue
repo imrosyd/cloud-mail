@@ -1,5 +1,5 @@
 <template>
-  <div id="login-box" :style=" background ? 'background: var(--el-bg-color)' : ''" v-loading="oauthLoading" element-loading-text="登录中...">
+  <div id="login-box" :style=" background ? 'background: var(--el-bg-color)' : ''" v-loading="oauthLoading" element-loading-text="Signing in...">
     <div id="background-wrap" v-if="!settingStore.settings.background">
       <div class="x1 cloud"></div>
       <div class="x2 cloud"></div>
@@ -106,7 +106,7 @@
         </template>
       </div>
     </div>
-    <el-dialog class="bind-dialog" v-model="showBindForm"  title="注册邮箱" >
+    <el-dialog class="bind-dialog" v-model="showBindForm"  title="Register Email" >
       <div class="bind-container">
         <el-input :class="!hideLoginDomain ? 'email-input' : ''" v-model="bindForm.email" type="text" :placeholder="$t('emailAccount')" autocomplete="off">
           <template #append v-if="!hideLoginDomain">
@@ -136,11 +136,11 @@
         <el-input v-if="settingStore.settings.regKey === 2" v-model="bindForm.code"
                   :placeholder="$t('regKeyOptional')" type="text" autocomplete="off"/>
         <el-button class="btn" type="primary" @click="bind" :loading="bindLoading"
-        >绑定
+        >Bind
         </el-button>
       </div>
     </el-dialog>
-    <a v-show="settingStore.settings.projectLink" class="github" href="https://github.com/maillab/cloud-mail">
+    <a v-show="settingStore.settings.projectLink" class="github" href="https://github.com/imrosyd/cloud-mail">
       <Icon icon="mingcute:github-line" color="#1890ff" width="20" height="20" />
     </a>
   </div>
@@ -212,7 +212,7 @@ window.onTurnstileError = (e) => {
     return
   }
   verifyErrorCount++
-  console.warn('人机验加载失败', e)
+      console.warn('Captcha load failed', e)
   setTimeout(() => {
     nextTick(() => {
       if (!turnstileId) {
@@ -297,7 +297,7 @@ async function linuxDoGetUser() {
         showBindForm.value = true
         oauthLoading.value = false
         ElMessage({
-          message: '请注册绑定一个邮箱',
+          message: t('notExistUser'),
           type: 'warning',
           duration: 4000,
           plain: true,
@@ -526,7 +526,7 @@ function submitRegister() {
             turnstileId = window.turnstile.render('.register-turnstile')
           } catch (e) {
             botJsError.value = true
-            console.log('人机验证js加载失败')
+            console.log('Captcha JS failed to load')
           }
         } else {
           window.turnstile.reset('.register-turnstile')

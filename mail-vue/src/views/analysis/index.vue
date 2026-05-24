@@ -362,9 +362,9 @@ function createSenderPie() {
         label: {
           show: false,
           position: 'outside', // 标签显示在外部
-          formatter: '{d}%',  // 显示名称和占比
+          formatter: '{d}%',  // Show name and percentage
           color: '#333',
-          fontSize: 14  // 设置字体大小
+          fontSize: 14
         },
         emphasis: {
           label: {
@@ -376,7 +376,7 @@ function createSenderPie() {
         labelLine: {
           show: true
         },
-        color: ['#3CB2FF', '#13DEB9', '#FBBF24', '#FF7F50', '#BAE6FD', '#C084FC'] // 添加符合主题的配色
+        color: ['#3CB2FF', '#13DEB9', '#FBBF24', '#FF7F50', '#BAE6FD', '#C084FC'] // Add theme colors
       }
     ]
   }
@@ -393,11 +393,11 @@ function createIncreaseLine() {
 
   let option = {
     tooltip: {
-      trigger: 'axis', // 设置触发方式为 'axis'，在坐标轴上显示信息
+          trigger: 'axis', // Set trigger to 'axis'
       axisPointer: {
-        type: 'cross', // 指示器的类型为交叉型，适用于折线图等
+          type: 'cross', // Crosshair type for line charts
         crossStyle: {
-          color: topic.value.crossColor// 设置指示器线的颜色
+          color: topic.value.crossColor// Crosshair line color
         },
         lineStyle: {
           color: topic.value.crossColor         // ← 竖线颜色
@@ -411,12 +411,12 @@ function createIncreaseLine() {
         });
         return result;
       },
-      backgroundColor: topic.value.background,  // 设置背景颜色
-      borderColor: topic.value.splitLineColor,      // 设置边框颜色
-      borderWidth: 1,           // 设置边框宽度
-      padding: 10,              // 设置内边距
+          backgroundColor: topic.value.background,  // Background color
+          borderColor: topic.value.splitLineColor,      // Border color
+          borderWidth: 1,           // Border width
+          padding: 10,              // Padding
       textStyle: {
-        color: topic.value.color,          // 设置文字颜色
+          color: topic.value.color,          // Text color
       }
     },
     grid: {
@@ -430,7 +430,7 @@ function createIncreaseLine() {
       data: userLineData.xdata,
       axisTick: {
         show: false,
-        alignWithLabel: false,  // 刻度线与标签对齐,
+          alignWithLabel: false,
         lineStyle: {
           color: topic.value.axisColor,
         }
@@ -464,7 +464,7 @@ function createIncreaseLine() {
     yAxis: {
       type: 'value',
       axisLabel: {
-        margin: 5, // 增加y轴刻度数字与网格线之间的间距
+          margin: 5, // Increase gap between y-axis labels and grid
       },
       boundaryGap: [0, 0.1],
       max: (params) => {
@@ -488,10 +488,10 @@ function createIncreaseLine() {
         }
       },
       splitLine: {
-        show: true, // 显示网格线
+          show: true, // Show grid lines
         lineStyle: {
-          type: 'dashed', // 设置网格线为虚线
-          color: topic.value.scaleLineColor   // 设置虚线的颜色
+          type: 'dashed', // Dashed grid lines
+          color: topic.value.scaleLineColor   // Scale line color
         }
       }
     },
@@ -562,8 +562,8 @@ function createEmailColumnChart() {
     legend: {
       data: [t('emailReceived'), t('emailSent')],
       top: '0',
-      textStyle: {
-        color: topic.value.color,  // 图例文字颜色
+        textStyle: {
+          color: topic.value.color,  // Legend text color
       }
     },
     grid: {

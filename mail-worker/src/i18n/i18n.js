@@ -21,7 +21,7 @@ const resources = {
 };
 
 i18next.init({
-	fallbackLng: 'zh',
+	fallbackLng: 'en',
 	resources,
 });
 

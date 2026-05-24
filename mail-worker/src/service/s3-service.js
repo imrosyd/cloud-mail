@@ -48,11 +48,11 @@ const s3Service = {
 
 				const body = args.request.body
 
-				// 计算 MD5 校验和并转换为 Base64 编码
+				// Calculate MD5 checksum and convert to Base64
 				const encoder = new TextEncoder();
 				const data = encoder.encode(body);
 
-				// 使用 Web Crypto API 计算 MD5 校验和
+				// Calculate MD5 checksum using Web Crypto API
 				const hashBuffer = await crypto.subtle.digest('MD5', data);
 				const hashArray = new Uint8Array(hashBuffer);
 				const contentMD5 = btoa(String.fromCharCode.apply(null, hashArray));
