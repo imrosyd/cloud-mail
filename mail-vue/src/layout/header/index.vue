@@ -85,6 +85,8 @@ import {useSettingStore} from "@/store/setting.js";
 import {hasPerm} from "@/perm/perm.js"
 import {useI18n} from "vue-i18n";
 import {setExtend} from "@/utils/day.js"
+import { useClipboard } from '@/composables/useClipboard.js'
+const { copy } = useClipboard()
 
 const {t} = useI18n();
 const route = useRoute();
@@ -165,21 +167,7 @@ function userInfoHide(e) {
 }
 
 async function copyEmail(email) {
-  try {
-    await navigator.clipboard.writeText(email);
-    ElMessage({
-      message: t('copySuccessMsg'),
-      type: 'success',
-      plain: true,
-    })
-  } catch (err) {
-    console.error(`${t('copyFailMsg')}:`, err);
-    ElMessage({
-      message: t('copyFailMsg'),
-      type: 'error',
-      plain: true,
-    })
-  }
+  await copy(email)
 }
 
 function changeLang(lang) {
@@ -251,7 +239,7 @@ function clickLogout() {
 }
 
 function formatName(email) {
-  return email[0]?.toUpperCase() || ''
+  return email?.[0]?.toUpperCase() || ''
 }
 
 </script>

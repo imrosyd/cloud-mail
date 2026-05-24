@@ -145,6 +145,8 @@ import {useUserStore} from "@/store/user.js";
 import {hasPerm} from "@/perm/perm.js"
 import {useI18n} from "vue-i18n";
 import {AccountAllReceiveEnum} from "@/enums/account-enum.js";
+import { useClipboard } from '@/composables/useClipboard.js'
+const { copy } = useClipboard()
 
 const {t} = useI18n();
 const userStore = useUserStore();
@@ -366,21 +368,7 @@ function setAsTop(account, index) {
 }
 
 async function copyAccount(account) {
-  try {
-    await navigator.clipboard.writeText(account);
-    ElMessage({
-      message: t('copySuccessMsg'),
-      type: 'success',
-      plain: true,
-    })
-  } catch (err) {
-    console.error(`${t('copyFailMsg')}:`, err);
-    ElMessage({
-      message: t('copyFailMsg'),
-      type: 'error',
-      plain: true,
-    })
-  }
+  await copy(account)
 }
 
 function getAccountList() {

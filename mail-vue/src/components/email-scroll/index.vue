@@ -244,6 +244,8 @@ import {sleep} from "@/utils/time-utils.js"
 import {fromNow} from "@/utils/day.js";
 import {useI18n} from "vue-i18n";
 import {EmailUnreadEnum} from "@/enums/email-enum.js";
+import { useClipboard } from '@/composables/useClipboard.js'
+const { copy } = useClipboard()
 import { UseVirtualList } from '@vueuse/components'
 import { useScroll } from '@vueuse/core'
 
@@ -368,15 +370,17 @@ onMounted(() => {
       email.formatCreateTime = fromNow(email.createTime);
     })
   }, 1000 * 60);
+  window.addEventListener('resize', handleResize)
 })
 
 onUnmounted(() => {
   clearInterval(timer)
+  window.removeEventListener('resize', handleResize)
 })
 
 getEmailList()
 
-window.onresize = () => {
+function handleResize() {
   isMobile.value = innerWidth < 1367
 }
 
@@ -668,21 +672,7 @@ function handleSearch(type, value) {
 }
 
 async function copyCode(code) {
-  try {
-    await navigator.clipboard.writeText(code);
-    ElMessage({
-      message: t('copySuccessMsg'),
-      type: 'success',
-      plain: true
-    })
-  } catch (err) {
-    console.error(`${t('copyFailMsg')}:`, err);
-    ElMessage({
-      message: t('copyFailMsg'),
-      type: 'error',
-      plain: true
-    })
-  }
+  await copy(code)
 }
 
 function handleDelete() {

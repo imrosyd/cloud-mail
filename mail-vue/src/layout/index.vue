@@ -25,9 +25,9 @@
 import Aside from '@/layout/aside/index.vue'
 import Header from '@/layout/header/index.vue'
 import Main from '@/layout/main/index.vue'
-import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { ref, onMounted, onBeforeUnmount, defineAsyncComponent } from 'vue'
 import {useUiStore} from "@/store/ui.js";
-import writer from '@/layout/write/index.vue'
+const writer = defineAsyncComponent(() => import('@/layout/write/index.vue'))
 
 const uiStore = useUiStore();
 const writerRef = ref({})

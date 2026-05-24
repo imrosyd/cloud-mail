@@ -15,59 +15,61 @@ http.interceptors.request.use(config => {
 })
 
 http.interceptors.response.use((res) => {
+        const noMsg = res.config.noMsg;
+        const data = res.data
 
-        return new Promise((resolve, reject) => {
+        if (noMsg) {
+            return data.code === 200 ? data.data : Promise.reject(data)
+        }
 
-            const noMsg = res.config.noMsg;
-            const data = res.data
+        if (data.code === 200) {
+            return data.data
+        }
 
-            if (noMsg) {
+        if (data.code === 401) {
+            ElMessage({
+                message: data.message,
+                type: 'error',
+                plain: true,
+                grouping: true,
+                repeatNum: -4,
+            })
+            localStorage.removeItem('token')
+            router.replace('/login')
+            return Promise.reject(data)
+        }
 
-                data.code === 200 ? resolve(data.data) : reject(data)
+        if (data.code === 403) {
+            ElMessage({
+                message: data.message,
+                type: 'warning',
+                plain: true,
+                grouping: true,
+                repeatNum: -4,
+            })
+            return Promise.reject(data)
+        }
 
-            } else if (data.code === 401) {
-                ElMessage({
-                    message: data.message,
-                    type: 'error',
-                    plain: true,
-                    grouping: true,
-                    repeatNum: -4,
-                })
-                localStorage.removeItem('token')
-                router.replace('/login')
-                reject(data)
-            } else if (data.code === 403) {
-                ElMessage({
-                    message: data.message,
-                    type: 'warning',
-                    plain: true,
-                    grouping: true,
-                    repeatNum: -4,
-                })
-                reject(data)
+        if (data.code === 502) {
+            ElMessage({
+                dangerouslyUseHTMLString: true,
+                message: data.message,
+                type: 'error',
+                plain: true,
+                grouping: true,
+                repeatNum: -4,
+            })
+            return Promise.reject(data)
+        }
 
-            } else if (data.code === 502) {
-                ElMessage({
-                    dangerouslyUseHTMLString: true,
-                    message: data.message,
-                    type: 'error',
-                    plain: true,
-                    grouping: true,
-                    repeatNum: -4,
-                })
-                reject(data)
-            } else if (data.code !== 200) {
-                ElMessage({
-                    message: data.message,
-                    type: 'error',
-                    plain: true,
-                    grouping: true,
-                    repeatNum: -4,
-                })
-                reject(data)
-            }
-            resolve(data.data)
+        ElMessage({
+            message: data.message,
+            type: 'error',
+            plain: true,
+            grouping: true,
+            repeatNum: -4,
         })
+        return Promise.reject(data)
     },
     (error) => {
 
@@ -95,7 +97,6 @@ http.interceptors.response.use((res) => {
                 plain: true,
                 grouping: true
             })
-            ElMessage.error('')
         } else if (error.response) {
             ElMessage({
                 message: i18n.global.t('serverBusyErrorMsg'),

@@ -10,7 +10,8 @@
   </div>
 </template>
 <script setup>
-import account from '@/layout/account/index.vue'
+import { defineAsyncComponent } from 'vue'
+const account = defineAsyncComponent(() => import('@/layout/account/index.vue'))
 import {useUiStore} from "@/store/ui.js";
 import {useSettingStore} from "@/store/setting.js";
 import {computed, onBeforeUnmount, onMounted, watch} from "vue";

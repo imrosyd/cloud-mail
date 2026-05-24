@@ -365,7 +365,7 @@
 </template>
 
 <script setup>
-import {defineOptions, h, reactive, ref, watch} from 'vue'
+import {defineOptions, h, reactive, ref, watch, onMounted, onUnmounted} from 'vue'
 import {
   userList,
   userDelete,
@@ -1016,11 +1016,15 @@ function getUserList(loading = true) {
   })
 }
 
-window.onresize = () => {
-  adjustWidth()
-};
+window.addEventListener('resize', adjustWidth)
 
-adjustWidth()
+onMounted(() => {
+  adjustWidth()
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', adjustWidth)
+})
 
 function adjustWidth() {
   const width = window.innerWidth

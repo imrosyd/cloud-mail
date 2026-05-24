@@ -33,9 +33,12 @@ export async function init() {
 
         const [s, user] = await Promise.all([websiteConfig(), userPromise]);
         setting = s;
-        settingStore.settings = setting;
-        settingStore.domainList = setting.domainList;
-        document.title = setting.title;
+
+        if (setting) {
+            settingStore.settings = setting;
+            settingStore.domainList = setting.domainList;
+            document.title = setting.title;
+        }
 
         if (user) {
             accountStore.currentAccountId = user.account.accountId;
@@ -50,8 +53,10 @@ export async function init() {
 
     } else {
         setting = await websiteConfig();
-        settingStore.settings = setting;
-        settingStore.domainList = setting.domainList;
-        document.title = setting.title;
+        if (setting) {
+            settingStore.settings = setting;
+            settingStore.domainList = setting.domainList;
+            document.title = setting.title;
+        }
     }
 }
