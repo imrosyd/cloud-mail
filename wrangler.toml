@@ -1,0 +1,45 @@
+name = "cloud-mail"
+main = "mail-worker/src/index.js"
+compatibility_date = "2025-06-04"
+keep_vars = true
+
+[observability]
+enabled = true
+
+#[[d1_databases]]
+#binding = "db"
+#database_name = ""
+#database_id = ""
+
+#[[kv_namespaces]]
+#binding = "kv"
+#id = ""
+
+#[[r2_buckets]]
+#binding = "r2"
+#bucket_name = ""
+
+#[[send_email]]
+#name = "email"
+
+[ai]
+binding = "ai"
+
+[assets]
+binding = "assets"
+directory = "mail-worker/dist"
+not_found_handling = "single-page-application"
+run_worker_first = true
+
+[triggers]
+crons = ["*/30 * * * *", "0 16 * * *"]
+
+[vars]
+#ai_model = ""
+#analysis_cache = false
+#domain = []
+#admin = ""
+#jwt_secret = ""
+
+[build]
+command = "pnpm --prefix mail-worker install && pnpm --prefix mail-vue install && pnpm --prefix mail-vue run build"
