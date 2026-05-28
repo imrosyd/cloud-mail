@@ -88,8 +88,8 @@
             <span>{{ $t('emailSource') }}</span>
             <span class="source-button" v-if="false">
               <el-radio-group v-model="checkedSourceType">
-                <el-radio-button label="发件人" value="sender"/>
-                <el-radio-button label="邮箱" value="email"/>
+                <el-radio-button label="Sender" value="sender"/>
+                <el-radio-button label="Email" value="email"/>
               </el-radio-group>
             </span>
           </div>
@@ -337,7 +337,7 @@ function createSenderPie() {
       },
       backgroundColor: topic.value.background,
       formatter: params => {
-        return `${params.marker} ${params.name}： ${params.value} (${params.percent}%)`;
+        return `${params.marker} ${params.name}: ${params.value} (${params.percent}%)`;
       }
     },
     legend: {
@@ -367,7 +367,7 @@ function createSenderPie() {
         },
         label: {
           show: false,
-          position: 'outside', // 标签显示在外部
+          position: 'outside',
           formatter: '{d}%',  // Show name and percentage
           color: '#333',
           fontSize: 14
@@ -406,7 +406,7 @@ function createIncreaseLine() {
           color: topic.value.crossColor// Crosshair line color
         },
         lineStyle: {
-          color: topic.value.crossColor         // ← 竖线颜色
+          color: topic.value.crossColor
         },
         axis: 'x',
       },
@@ -602,8 +602,8 @@ function createEmailColumnChart() {
       splitLine: {
         show: true,
         lineStyle: {
-          color: topic.value.splitLineColor,  // ← 横线颜色
-          type: 'solid',    // dashed=虚线，solid=实线
+          color: topic.value.splitLineColor,
+          type: 'solid',
           width: 1
         }
       },
@@ -621,7 +621,7 @@ function createEmailColumnChart() {
       {
         name: t('emailReceived'),
         type: 'bar',
-        stack: 'total', // 堆叠组标识（必须相同）
+        stack: 'total',
         barWidth: '60%',
         barMaxWidth: 30,
         emphasis: {
@@ -638,7 +638,7 @@ function createEmailColumnChart() {
       {
         name: t('emailSent'),
         type: 'bar',
-        stack: 'total', // 堆叠组标识（必须相同）
+        stack: 'total',
         emphasis: {
           itemStyle: {
             shadowBlur: 10,
@@ -672,7 +672,6 @@ function createSendGauge() {
       name: t('sentToday'),
       type: 'gauge',
       max: 100,
-      // 进度条颜色（新增）
       progress: {
         show: true,
         roundCap: true,
@@ -680,7 +679,6 @@ function createSendGauge() {
           color: '#3CB2FF'
         }
       },
-      // 指针颜色（新增）
       pointer: {
         itemStyle: {
           color: '#3CB2FF'
@@ -689,7 +687,6 @@ function createSendGauge() {
       axisLabel: {
         color: topic.value.gaugeSplitLine,
       },
-      // 轴线背景色（新增）
       axisLine: {
         roundCap: true,
         lineStyle: {
@@ -698,27 +695,24 @@ function createSendGauge() {
       },
       splitLine: {
         lineStyle: {
-          color: topic.value.gaugeSplitLine, // 大刻度线颜色
+          color: topic.value.gaugeSplitLine,
         }
       },
-      // 刻度颜色（新增）
       axisTick: {
         lineStyle: {
           color: topic.value.axisColor
         }
       },
-      // 中心文字颜色（新增）
       detail: {
         valueAnimation: true,
         formatter: '{value}',
-        color: topic.value.color // 黑色文字
+        color: topic.value.color
       },
       data: [{
         value: daySendTotal,
         name: t('total'),
-        // 名称标签颜色（新增）
         title: {
-          color: topic.value.color  // 灰色标签
+          color: topic.value.color
         }
       }]
     }],

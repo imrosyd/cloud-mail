@@ -27,16 +27,16 @@
                 <span class="code" @click="copyCode(item.code)">{{ item.code }}</span>
               </div>
               <div class="info-left-item">
-                <div>{{ $t('remainingUses') }}：</div>
+                <div>{{ $t('remainingUses') }}:</div>
                 <div v-if="item.count">{{ item.count }}</div>
                 <el-tag v-else type="danger">{{ $t('exhausted') }}</el-tag>
               </div>
               <div class="info-left-item">
-                <div>{{ $t('roleDesc') }}：</div>
+                <div>{{ $t('roleDesc') }}:</div>
                 <el-tag>{{ item.roleName }}</el-tag>
               </div>
               <div class="info-left-item">
-                <div>{{ $t('validUntil') }}：</div>
+                <div>{{ $t('validUntil') }}:</div>
                 <div v-if="item.expireTime">{{ formatExpireTime(item.expireTime) }}</div>
                 <el-tag v-else type="danger">{{ $t('expired') }}</el-tag>
               </div>
@@ -206,9 +206,9 @@ function formatUserCreateTime(regKey) {
   } else {
 
     if (expireYear === currentYear) {
-      return createTime.format('M月D日 HH:mm');
+      return createTime.format('MMM D, HH:mm');
     } else {
-      return createTime.format('YYYY年M月D日 HH:mm');
+      return createTime.format('MMM D, YYYY HH:mm');
     }
 
   }
@@ -229,8 +229,8 @@ function formatExpireTime(expireTime) {
   } else {
 
     return expireYear === currentYear
-        ? expireDate.format('M月D日')
-        : expireDate.format('YYYY年M月D日');
+        ? expireDate.format('MMM D')
+        : expireDate.format('MMM D, YYYY');
 
   }
 }
