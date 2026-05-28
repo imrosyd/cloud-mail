@@ -1,0 +1,14 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "mail-worker",
+  "compatibility_date": "2026-05-28",
+  "observability": {
+    "enabled": true
+  },
+  "assets": {
+    "directory": "mail-vue"
+  },
+  "compatibility_flags": [
+    "nodejs_compat"
+  ]
+}
