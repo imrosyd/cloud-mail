@@ -337,7 +337,9 @@ const en = {
     searchUser: 'Search by user',
     searchEmail: 'Search by Email',
     searchSender: 'Search by Sender',
-    userEmail: 'Email Address'
+    userEmail: 'Email Address',
+    registerEmail: 'Register Email',
+    bind: 'Bind'
 }
 
 export default en

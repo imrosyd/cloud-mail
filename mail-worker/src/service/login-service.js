@@ -147,10 +147,6 @@ const loginService = {
 
 	},
 
-	async registerVerify() {
-
-	},
-
 	async handleOpenRegKey(c, regKey, code) {
 
 		if (!code) {
@@ -167,8 +163,8 @@ const loginService = {
 			throw new BizError(t('noRegKeyCount'));
 		}
 
-		const today = toUtc().tz('Asia/Shanghai').startOf('day')
-		const expireTime = toUtc(regKeyRow.expireTime).tz('Asia/Shanghai').startOf('day');
+		const today = toUtc().startOf('day')
+		const expireTime = toUtc(regKeyRow.expireTime).startOf('day');
 
 		if (expireTime.isBefore(today)) {
 			throw new BizError(t('regKeyExpire'));
@@ -189,8 +185,8 @@ const loginService = {
 			return null
 		}
 
-		const today = toUtc().tz('Asia/Shanghai').startOf('day')
-		const expireTime = toUtc(regKeyRow.expireTime).tz('Asia/Shanghai').startOf('day');
+		const today = toUtc().startOf('day')
+		const expireTime = toUtc(regKeyRow.expireTime).startOf('day');
 
 		if (regKeyRow.count <= 0 || expireTime.isBefore(today)) {
 			return null

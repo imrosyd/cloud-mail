@@ -34,7 +34,7 @@ const zh = {
 	notEmailDomain: '非法邮箱域名',
 	emptyRegKey: '注册码不能为空',
 	notExistRegKey: '注册码不存在',
-	noRegKeyTotal: '注册码使用次数已耗尽',
+	noRegKeyCount: '注册码使用次数已耗尽',
 	regKeyExpire: '注册码已过期',
 	emailAndPwdEmpty: '邮箱和密码不能为空',
 	notExistUser: '输入的邮箱不存在',

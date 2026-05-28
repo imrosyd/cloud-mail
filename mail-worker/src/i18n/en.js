@@ -34,7 +34,7 @@ const en = {
 	notEmailDomain: 'Invalid email domain',
 	emptyRegKey: 'Invite code cannot be empty',
 	notExistRegKey: 'Invite code does not exist',
-	noRegKeyTotal: 'Invite code usage limit reached',
+	noRegKeyCount: 'Invite code usage limit reached',
 	regKeyExpire: 'Invite code has expired',
 	emailAndPwdEmpty: 'Email and password cannot be empty',
 	notExistUser: 'Email does not exist',
