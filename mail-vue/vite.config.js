@@ -28,7 +28,7 @@ export default defineConfig(({mode}) => {
             }
         },
         build: {
-            target: 'es2020',
+            target: 'es2022',
             outDir: env.VITE_OUT_DIR || 'dist',
             emptyOutDir: true,
             assetsInclude: ['**/*.json'],
