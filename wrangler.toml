@@ -6,14 +6,14 @@ keep_vars = true
 [observability]
 enabled = true
 
-#[[d1_databases]]
-#binding = "db"
-#database_name = ""
-#database_id = ""
+[[d1_databases]]
+binding = "db"
+database_name = "cloud-mail-prod"
+database_id = "e4a2b84d-c8cb-4958-a73e-ade21c654027"
 
-#[[kv_namespaces]]
-#binding = "kv"
-#id = ""
+[[kv_namespaces]]
+binding = "kv"
+id = "299be75ea0bf40b4a22d22688a7f9b7e"
 
 #[[r2_buckets]]
 #binding = "r2"
