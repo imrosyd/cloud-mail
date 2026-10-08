@@ -10,6 +10,7 @@
                  @click="changeAccount(item)">
           <div class="account">
             {{ item.email }}
+            <span class="unread-count" v-if="notifyStore.unreadAccounts[item.accountId]">{{ notifyStore.unreadAccounts[item.accountId] > 99 ? '99+' : notifyStore.unreadAccounts[item.accountId] }}</span>
           </div>
           <div class="opt">
             <div class="send-email" @click.stop>
@@ -127,6 +128,8 @@
 </template>
 <script setup>
 import {Icon} from "@iconify/vue";
+import {useNotifyStore} from "@/store/notify.js";
+const notifyStore = useNotifyStore();
 import {computed, nextTick, reactive, ref, watch} from "vue";
 import {
   accountList,
@@ -662,4 +665,20 @@ path[fill="#ffdda1"] {
   position: fixed;
 }
 
+.unread-count {
+  display: inline-block;
+  margin-left: 6px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: #f56c6c;
+  color: #fff;
+  font-size: 11px;
+  font-weight: bold;
+  line-height: 18px;
+  text-align: center;
+  vertical-align: middle;
+  box-sizing: border-box;
+}
 </style>

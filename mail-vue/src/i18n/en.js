@@ -339,7 +339,15 @@ const en = {
     searchSender: 'Search by Sender',
     userEmail: 'Email Address',
     registerEmail: 'Register Email',
-    bind: 'Bind'
+    bind: 'Bind',
+    newEmailNotify: 'New Email Notifications',
+    desktopNotify: 'Desktop notifications',
+    desktopNotifyDesc: 'Show a browser notification when an email arrives',
+    notifySound: 'Notification sound',
+    notifyBlocked: 'Notifications are blocked in the browser',
+    newEmailFrom: 'New email from {name}',
+    noSubject: '(no subject)',
+    sessionExpired: 'Session expired, auto refresh stopped. Please log in again.'
 }
 
 export default en

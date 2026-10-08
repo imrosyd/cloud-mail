@@ -27,9 +27,11 @@ import Header from '@/layout/header/index.vue'
 import Main from '@/layout/main/index.vue'
 import { ref, onMounted, onBeforeUnmount, defineAsyncComponent } from 'vue'
 import {useUiStore} from "@/store/ui.js";
+import {useMailNotifier} from '@/composables/useMailNotifier.js'
 const writer = defineAsyncComponent(() => import('@/layout/write/index.vue'))
 
 const uiStore = useUiStore();
+useMailNotifier()
 const writerRef = ref({})
 const isMobile = ref(window.innerWidth < 1025)
 const handleResize = () => {

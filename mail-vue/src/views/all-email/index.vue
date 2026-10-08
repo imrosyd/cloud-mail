@@ -88,6 +88,7 @@
 </template>
 
 <script setup>
+import {warnSessionExpired} from '@/composables/useMailNotifier.js'
 import {starAdd, starCancel} from "@/request/star.js";
 import emailScroll from "@/components/email-scroll/index.vue"
 import {computed, defineOptions, reactive, ref, watch, onMounted} from "vue";
@@ -347,6 +348,7 @@ async function latest() {
     } catch (e) {
       if (e.code === 401 || e.code === 403) {
         settingStore.settings.autoRefresh = 0;
+          warnSessionExpired();
       }
       console.error(e)
     }

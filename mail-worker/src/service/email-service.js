@@ -731,6 +731,39 @@ const emailService = {
 		return list;
 	},
 
+	async unreadStat(c, userId) {
+		const rows = await orm(c).select({
+			accountId: email.accountId,
+			count: count(email.emailId),
+		}).from(email)
+			.leftJoin(account, eq(account.accountId, email.accountId))
+			.where(and(
+				eq(email.userId, userId),
+				eq(email.type, emailConst.type.RECEIVE),
+				eq(email.unread, emailConst.unread.UNREAD),
+				eq(email.isDel, isDel.NORMAL),
+				eq(account.isDel, isDel.NORMAL)
+			))
+			.groupBy(email.accountId);
+
+		const latest = await orm(c).select({ emailId: email.emailId }).from(email)
+			.where(and(
+				eq(email.userId, userId),
+				eq(email.type, emailConst.type.RECEIVE),
+				eq(email.isDel, isDel.NORMAL)
+			))
+			.orderBy(desc(email.emailId)).limit(1).get();
+
+		const accounts = {};
+		let total = 0;
+		for (const row of rows) {
+			accounts[row.accountId] = row.count;
+			total += row.count;
+		}
+
+		return { total, accounts, latestId: latest?.emailId || 0 };
+	},
+
 	async physicsDelete(c, params) {
 		let { emailIds } = params;
 		emailIds = emailIds.split(',').map(Number);

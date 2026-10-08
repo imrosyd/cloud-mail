@@ -23,6 +23,7 @@
 </template>
 
 <script setup>
+import {warnSessionExpired} from '@/composables/useMailNotifier.js'
 import {useAccountStore} from "@/store/account.js";
 import {useEmailStore} from "@/store/email.js";
 import {useSettingStore} from "@/store/setting.js";
@@ -123,6 +124,7 @@ async function latest() {
       } catch (e) {
         if (e.code === 401 || e.code === 403) {
           settingStore.settings.autoRefresh = 0;
+          warnSessionExpired();
         }
         console.error(e)
       }

@@ -337,6 +337,14 @@ const zh = {
     searchUser: '搜索用户',
     searchEmail: '搜索邮箱',
     searchSender: '搜索发件人',
-    userEmail: '用户邮箱'
+    userEmail: '用户邮箱',
+    newEmailNotify: '新邮件通知',
+    desktopNotify: '桌面通知',
+    desktopNotifyDesc: '收到邮件时显示浏览器通知',
+    notifySound: '提示音',
+    notifyBlocked: '浏览器已阻止通知',
+    newEmailFrom: '来自 {name} 的新邮件',
+    noSubject: '(无主题)',
+    sessionExpired: '会话已过期，自动刷新已停止，请重新登录。'
 }
 export default zh

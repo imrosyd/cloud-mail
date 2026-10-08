@@ -339,7 +339,15 @@ const id = {
     searchSender: 'Cari berdasarkan Pengirim',
     userEmail: 'Alamat Email',
     registerEmail: 'Daftarkan Email',
-    bind: 'Ikat'
+    bind: 'Ikat',
+    newEmailNotify: 'Notifikasi Email Baru',
+    desktopNotify: 'Notifikasi desktop',
+    desktopNotifyDesc: 'Tampilkan notifikasi browser saat ada email masuk',
+    notifySound: 'Suara notifikasi',
+    notifyBlocked: 'Izin notifikasi diblokir di browser',
+    newEmailFrom: 'Email baru dari {name}',
+    noSubject: '(tanpa subjek)',
+    sessionExpired: 'Sesi berakhir, perbarui otomatis dihentikan. Silakan login ulang.'
 }
 
 export default id

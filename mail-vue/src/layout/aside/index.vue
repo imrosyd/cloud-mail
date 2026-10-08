@@ -10,6 +10,7 @@
                       :class="route.meta.name === 'email' ? 'choose-item' : ''">
           <Icon icon="hugeicons:mailbox-01" width="20" height="20" />
           <span class="menu-name" style="margin-left: 21px">{{$t('inbox')}}</span>
+          <span class="unread-badge" v-if="notifyStore.unreadTotal > 0">{{ notifyStore.unreadTotal > 99 ? '99+' : notifyStore.unreadTotal }}</span>
         </el-menu-item>
         <el-menu-item @click="router.push({name: 'send'})" index="send" v-perm="'email:send'"
                       :class="route.meta.name === 'send' ? 'choose-item' : ''">
@@ -75,7 +76,10 @@ import { useRoute } from "vue-router";
 import {Icon} from "@iconify/vue";
 import {useSettingStore} from "@/store/setting.js";
 
+import {useNotifyStore} from "@/store/notify.js";
+
 const settingStore = useSettingStore();
+const notifyStore = useNotifyStore();
 const route = useRoute();
 
 </script>
@@ -175,5 +179,19 @@ const route = useRoute();
 
 .scroll {
 
+}
+.unread-badge {
+  margin-left: auto;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 10px;
+  background: #f56c6c;
+  color: #fff;
+  font-size: 12px;
+  font-weight: bold;
+  line-height: 20px;
+  text-align: center;
+  box-sizing: border-box;
 }
 </style>

@@ -43,6 +43,20 @@
         <el-option label="Indonesia" value="id" @pointerdown.prevent.stop="changeLang('id')"/>
       </el-select>
     </div>
+    <div class="notify">
+      <div class="title">{{$t('newEmailNotify')}}</div>
+      <div class="notify-item">
+        <div>
+          <div>{{$t('desktopNotify')}}</div>
+          <div class="notify-desc">{{$t('desktopNotifyDesc')}}</div>
+        </div>
+        <el-switch :model-value="notifyStore.desktop" @change="changeDesktop"/>
+      </div>
+      <div class="notify-item">
+        <div>{{$t('notifySound')}}</div>
+        <el-switch v-model="notifyStore.sound"/>
+      </div>
+    </div>
     <div class="del-email" v-perm="'my:delete'">
       <div class="title">{{$t('deleteUser')}}</div>
       <div style="color: var(--regular-text-color);">
@@ -70,10 +84,12 @@ import {accountSetName} from "@/request/account.js";
 import {useAccountStore} from "@/store/account.js";
 import {useI18n} from "vue-i18n";
 import {useSettingStore} from "@/store/setting.js";
+import {useNotifyStore} from "@/store/notify.js";
 
 const { t } = useI18n()
 const accountStore = useAccountStore()
 const settingStore = useSettingStore()
+const notifyStore = useNotifyStore()
 const userStore = useUserStore();
 const setPwdLoading = ref(false)
 const setNameShow = ref(false)
@@ -121,6 +137,22 @@ function setName() {
   }).catch(() => {
     userStore.user.name = name
   })
+}
+
+async function changeDesktop(value) {
+  if (!value) {
+    notifyStore.desktop = false
+    return
+  }
+  if (!('Notification' in window)) return
+  const permission = Notification.permission === 'default'
+      ? await Notification.requestPermission()
+      : Notification.permission
+  if (permission !== 'granted') {
+    ElMessage({message: t('notifyBlocked'), type: 'warning', plain: true})
+    return
+  }
+  notifyStore.desktop = true
 }
 
 function changeLang(lang) {
@@ -284,6 +316,28 @@ function submitPwd() {
 
     .language-select {
       width: 100px;
+    }
+  }
+
+  .notify {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 40px;
+    font-size: 14px;
+
+    .notify-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      max-width: 420px;
+    }
+
+    .notify-desc {
+      color: var(--regular-text-color);
+      font-size: 12px;
+      margin-top: 4px;
     }
   }
 
