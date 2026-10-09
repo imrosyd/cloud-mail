@@ -23,28 +23,22 @@
 </template>
 
 <script setup>
-import {warnSessionExpired} from '@/composables/useMailNotifier.js'
 import {useAccountStore} from "@/store/account.js";
 import {useEmailStore} from "@/store/email.js";
-import {useSettingStore} from "@/store/setting.js";
 import {useNotifyStore} from "@/store/notify.js";
 import emailScroll from "@/components/email-scroll/index.vue"
-import {emailList, emailDelete, emailLatest, emailRead} from "@/request/email.js";
+import {emailList, emailDelete, emailRead} from "@/request/email.js";
 import {starAdd, starCancel} from "@/request/star.js";
 import {defineOptions, h, onMounted, reactive, ref, watch} from "vue";
-import {sleep} from "@/utils/time-utils.js";
 import router from "@/router/index.js";
 import {Icon} from "@iconify/vue";
-import { useRoute } from 'vue-router'
 
 defineOptions({
   name: 'email'
 })
 
-const route = useRoute();
 const emailStore = useEmailStore();
 const accountStore = useAccountStore();
-const settingStore = useSettingStore();
 const notifyStore = useNotifyStore();
 const scroll = ref({})
 const params = reactive({
@@ -53,7 +47,6 @@ const params = reactive({
 
 onMounted(() => {
   emailStore.emailScroll = scroll;
-  latest()
 })
 
 
@@ -91,63 +84,6 @@ function jumpContent(email) {
 }
 
 const existIds = new Set();
-
-async function latest() {
-  while (true) {
-
-    let autoRefresh = settingStore.settings.autoRefresh;
-    await sleep(autoRefresh > 1 ? autoRefresh * 1000 : 3000);
-
-    if (route.name !== 'email') {
-      continue;
-    }
-
-    const latestId = scroll.value.latestEmail?.emailId
-
-    if (!scroll.value.firstLoad && autoRefresh > 1) {
-      try {
-        const accountId = accountStore.currentAccountId
-        const allReceive = scroll.value.latestEmail?.allReceive
-        const curTimeSort = params.timeSort
-        let list = []
-
-        //Ensure the last email on request is current account's
-        if (accountId === scroll.value.latestEmail?.reqAccountId) {
-          list = await emailLatest(latestId, accountId, allReceive);
-        }
-
-        //Ensure account, time sort, and email type haven't changed on return
-        if (accountId === accountStore.currentAccountId && params.timeSort === curTimeSort && allReceive === accountStore.currentAccount.allReceive) {
-          if (list.length > 0) {
-
-            for (let email of list) {
-
-              email.reqAccountId = accountId;
-              email.allReceive = allReceive;
-
-              if (!existIds.has(email.emailId)) {
-
-                existIds.add(email.emailId)
-                scroll.value.addItem(email)
-
-                await sleep(50)
-              }
-
-            }
-
-          }
-
-        }
-      } catch (e) {
-        if (e.code === 401 || e.code === 403) {
-          settingStore.settings.autoRefresh = 0;
-          warnSessionExpired();
-        }
-        console.error(e)
-      }
-    }
-  }
-}
 
 function addStar(email) {
   emailStore.starScroll?.addItem(email)

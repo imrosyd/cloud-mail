@@ -6,6 +6,8 @@ import { useNotifyStore } from '@/store/notify.js'
 import { useSettingStore } from '@/store/setting.js'
 
 const DEFAULT_INTERVAL = 10
+// A tab in the background checks rarely; returning to it checks at once
+const HIDDEN_INTERVAL = 60
 const MAX_POPUPS = 3
 
 let sessionWarned = false
@@ -118,9 +120,16 @@ export function useMailNotifier() {
     let timer = null
     let stopped = false
     let running = false
+    let pending = false
 
     async function poll() {
-        if (stopped || running) return
+        if (stopped) return
+        // A request made mid-poll (e.g. a mail was just read) runs right after,
+        // so the count never stays stale until the next interval
+        if (running) {
+            pending = true
+            return
+        }
         running = true
         try {
             const stat = await emailUnread()
@@ -144,13 +153,19 @@ export function useMailNotifier() {
             }
         } finally {
             running = false
+            if (pending) {
+                pending = false
+                poll()
+            }
         }
     }
 
     function schedule() {
         clearTimeout(timer)
         if (stopped) return
-        const sec = settingStore.settings.autoRefresh > 1 ? settingStore.settings.autoRefresh : DEFAULT_INTERVAL
+        const sec = document.hidden
+            ? HIDDEN_INTERVAL
+            : settingStore.settings.autoRefresh > 1 ? settingStore.settings.autoRefresh : DEFAULT_INTERVAL
         timer = setTimeout(async () => {
             await poll()
             schedule()
@@ -166,6 +181,7 @@ export function useMailNotifier() {
 
     function onVisible() {
         if (!document.hidden) poll()
+        schedule()
     }
 
     watch(() => [notifyStore.unreadTotal, settingStore.settings.title], updateTitle)
