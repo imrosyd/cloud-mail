@@ -349,7 +349,7 @@ const en = {
     noSubject: '(no subject)',
     sessionExpired: 'Session expired, auto refresh stopped. Please log in again.',
     allDomains: 'All domains',
-    sortDefault: 'Default (pinned)',
+    sortDefault: 'Manual (drag to reorder)',
     sortDomain: 'Domain',
     sortEmail: 'Address A–Z',
     sortUnread: 'Most unread',

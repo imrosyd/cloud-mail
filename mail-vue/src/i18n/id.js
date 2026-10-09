@@ -349,7 +349,7 @@ const id = {
     noSubject: '(tanpa subjek)',
     sessionExpired: 'Sesi berakhir, perbarui otomatis dihentikan. Silakan login ulang.',
     allDomains: 'Semua domain',
-    sortDefault: 'Bawaan (disematkan)',
+    sortDefault: 'Manual (seret untuk mengatur)',
     sortDomain: 'Domain',
     sortEmail: 'Alamat A–Z',
     sortUnread: 'Belum dibaca terbanyak',

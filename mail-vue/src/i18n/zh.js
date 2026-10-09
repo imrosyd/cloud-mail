@@ -347,7 +347,7 @@ const zh = {
     noSubject: '(无主题)',
     sessionExpired: '会话已过期，自动刷新已停止，请重新登录。',
     allDomains: '全部域名',
-    sortDefault: '默认（置顶）',
+    sortDefault: '手动（拖动排序）',
     sortDomain: '域名',
     sortEmail: '地址 A–Z',
     sortUnread: '未读最多',

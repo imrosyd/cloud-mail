@@ -28,6 +28,11 @@ app.put('/account/setAllReceive', async (c) => {
 	return c.json(result.ok());
 });
 
+app.put('/account/setSort', async (c) => {
+	await accountService.setSort(c, await c.req.json(), userContext.getUserId(c));
+	return c.json(result.ok());
+});
+
 app.put('/account/setAsTop', async (c) => {
 	await accountService.setAsTop(c, await c.req.json(), userContext.getUserId(c));
 	return c.json(result.ok());

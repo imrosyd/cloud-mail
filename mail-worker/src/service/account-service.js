@@ -269,6 +269,22 @@ const accountService = {
 		let mainSort = mainAccountRow.sort === 0 ? 2 : mainAccountRow.sort + 1;
 		await orm(c).update(account).set({ sort: mainSort }).where(eq(account.email, userRow.email )).run();
 		await orm(c).update(account).set({ sort: mainSort - 1 }).where(and(eq(account.accountId, accountId),eq(account.userId,userId))).run();
+	},
+
+	// Save a manual order: accountIds come first-to-last, the main account always stays on top
+	async setSort(c, params, userId) {
+		const accountIds = (params.accountIds || []).map(Number).filter(id => Number.isInteger(id) && id > 0);
+		if (accountIds.length === 0) return;
+
+		const userRow = await userService.selectById(c, userId);
+		const total = accountIds.length;
+		const stmts = accountIds.map((id, i) =>
+			c.env.db.prepare('UPDATE account SET sort = ? WHERE account_id = ? AND user_id = ?').bind(total - i, id, userId)
+		);
+		stmts.push(
+			c.env.db.prepare('UPDATE account SET sort = ? WHERE email = ? AND user_id = ?').bind(total + 1, userRow.email, userId)
+		);
+		await c.env.db.batch(stmts);
 	}
 };
 

@@ -24,14 +24,14 @@
       </div>
     </div>
     <el-scrollbar class="scrollbar" ref="scrollbarRef">
-      <div v-infinite-scroll="getAccountList" :infinite-scroll-distance="600" :infinite-scroll-immediate="false">
+      <div ref="listRef" v-infinite-scroll="getAccountList" :infinite-scroll-distance="600" :infinite-scroll-immediate="false">
         <template v-for="item in displayAccounts" :key="item.accountId">
         <div class="domain-group" v-if="groupStarts.has(item.accountId)">
           <span class="domain-dot" :style="{background: domainColor(domainOf(item.email))}"></span>
           {{ domainOf(item.email) }}
           <span class="domain-count">{{ domainCounts[domainOf(item.email)] }}</span>
         </div>
-        <el-card class="item" :class="itemBg(item.accountId)"
+        <el-card class="item" :class="[itemBg(item.accountId), isMain(item) ? 'item-main' : '', canDrag ? 'item-drag' : '']"
                  :style="{'--domain-color': domainColor(domainOf(item.email))}"
                  @click="changeAccount(item)">
           <div class="account">
@@ -157,7 +157,7 @@
 import {Icon} from "@iconify/vue";
 import {useNotifyStore} from "@/store/notify.js";
 const notifyStore = useNotifyStore();
-import {computed, nextTick, reactive, ref, watch} from "vue";
+import {computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch} from "vue";
 import {
   accountList,
   accountAdd,
@@ -165,8 +165,10 @@ import {
   accountSetName,
   accountSetAllReceive,
   accountSetAsTop,
-  accountListAll
+  accountListAll,
+  accountSetSort
 } from "@/request/account.js";
+import Sortable from 'sortablejs'
 import {sleep} from "@/utils/time-utils.js"
 import {isEmail} from "@/utils/verify-utils.js";
 import {useSettingStore} from "@/store/setting.js";
@@ -407,13 +409,22 @@ function domainOf(email = '') {
   return email.split('@')[1]?.toLowerCase() || ''
 }
 
-// Same domain always gets the same color, taken from the app's Ant-style palette
-const DOMAIN_COLORS = ['#1890ff', '#13c2c2', '#722ed1', '#52c41a', '#faad14', '#2f54eb', '#eb2f96', '#fa8c16']
+// Ant-style palette matching the app; each domain gets its own slot
+const DOMAIN_COLORS = ['#1890ff', '#52c41a', '#722ed1', '#fa8c16', '#13c2c2', '#eb2f96', '#2f54eb', '#faad14', '#a0d911', '#fa541c']
+
+// Configured domains keep a fixed order so their colors never shift;
+// domains outside the config follow alphabetically
+const domainIndex = computed(() => {
+  const ordered = settingStore.domainList.map(d => d.replace(/^@/, '').toLowerCase())
+  const extra = Object.keys(domainCounts.value).filter(d => !ordered.includes(d)).sort()
+  const map = {}
+  ;[...ordered, ...extra].forEach((d, i) => { if (!(d in map)) map[d] = Object.keys(map).length })
+  return map
+})
 
 function domainColor(domain) {
-  let hash = 0
-  for (const ch of domain) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0
-  return DOMAIN_COLORS[hash % DOMAIN_COLORS.length]
+  const i = domainIndex.value[domain] ?? 0
+  return DOMAIN_COLORS[i % DOMAIN_COLORS.length]
 }
 
 const domainFilter = ref('')
@@ -498,9 +509,70 @@ function changeSort(value) {
 
 watch(domainFilter, v => v && ensureAll())
 
+// Manual order: drag cards in "manual" mode; the main account stays pinned on top
+const listRef = ref(null)
+const canDrag = computed(() => accountStore.sortBy === 'default' && !domainFilter.value)
+let sortable = null
+
+function isMain(account) {
+  return account.accountId === userStore.user.account?.accountId
+}
+
+function onDragEnd(evt) {
+  const {item, from, oldIndex, newIndex, oldDraggableIndex, newDraggableIndex} = evt
+  if (oldIndex === newIndex) return
+
+  // Put the DOM back where Vue expects it, then reorder the data
+  from.insertBefore(item, from.children[oldIndex + (oldIndex > newIndex ? 1 : 0)] || null)
+
+  const [moved] = accounts.splice(oldDraggableIndex, 1)
+  accounts.splice(newDraggableIndex, 0, moved)
+
+  const ids = accounts.filter(a => !isMain(a)).map(a => a.accountId)
+  accounts.forEach((a, i) => { a.sort = accounts.length - i })
+  accountSetSort(ids).catch(() => refresh())
+}
+
+function setupSortable() {
+  if (!listRef.value || sortable) return
+  sortable = Sortable.create(listRef.value, {
+    draggable: '.item',
+    filter: '.item-main, .settings, .send-email',
+    preventOnFilter: false,
+    animation: 150,
+    delay: 200,
+    delayOnTouchOnly: true,
+    ghostClass: 'item-ghost',
+    onMove: evt => !evt.related.classList.contains('item-main'),
+    onEnd: onDragEnd,
+  })
+}
+
+watch(canDrag, async on => {
+  if (on) {
+    await ensureAll()
+    await nextTick()
+    setupSortable()
+    sortable?.option('disabled', false)
+  } else {
+    sortable?.option('disabled', true)
+  }
+})
+
+onMounted(async () => {
+  if (canDrag.value && hasPerm('account:query')) {
+    await nextTick()
+    setupSortable()
+  }
+})
+
+onBeforeUnmount(() => sortable?.destroy())
+
 function getAccountList() {
 
-  if (accountStore.sortBy !== 'default' && accounts.length === 0) {
+  // Load every account up front: sorting, filtering and dragging all need the full list
+  if (accounts.length === 0) {
+    if (loading.value) return
     loading.value = true
     accountListAll().then(list => {
       accounts.push(...list)
@@ -874,5 +946,13 @@ path[fill="#ffdda1"] {
     float: none;
     margin-left: 6px;
   }
+}
+
+.item-drag:not(.item-main) {
+  cursor: grab;
+}
+
+.item-ghost {
+  opacity: .4;
 }
 </style>
