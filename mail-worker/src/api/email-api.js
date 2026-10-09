@@ -16,6 +16,10 @@ app.get('/email/latest', async (c) => {
 
 app.get('/email/unread', async (c) => {
 	const data = await emailService.unreadStat(c, userContext.getUserId(c));
+	const { shown, seq, applied, hidden } = c.req.query();
+	if (shown !== undefined) {
+		console.log(`[unread] user=${userContext.getUserId(c)} total=${data.total} shown=${shown} seq=${seq} applied=${applied} hidden=${hidden}`);
+	}
 	return c.json(result.ok(data));
 });
 

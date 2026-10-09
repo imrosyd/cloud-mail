@@ -119,19 +119,27 @@ export function useMailNotifier() {
     let lastId = null
     let timer = null
     let stopped = false
-    // Every poll gets a number; only the newest one may apply its result.
+    // Every poll gets a number; a result is applied unless a newer one already was.
     // Polls never wait on each other, so one hung request can't freeze the count.
     let seq = 0
+    let appliedSeq = 0
 
     async function poll() {
         if (stopped) return
         const mine = ++seq
         try {
-            const stat = await emailUnread()
-            if (mine !== seq || stopped) return
+            const stat = await emailUnread({
+                shown: notifyStore.unreadTotal,
+                seq: mine,
+                applied: appliedSeq,
+                hidden: document.hidden ? 1 : 0,
+            })
+            if (mine < appliedSeq || stopped) return
+            appliedSeq = mine
 
             notifyStore.unreadTotal = stat.total
             notifyStore.unreadAccounts = stat.accounts
+            updateTitle()
 
             if (lastId === null) {
                 lastId = stat.latestId

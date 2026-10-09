@@ -1,8 +1,9 @@
 import http from '@/axios/index.js';
 import {useNotifyStore} from '@/store/notify.js';
 
-export function emailUnread() {
-    return http.get('/email/unread', {noMsg: true, timeout: 15 * 1000})
+// diag carries the client's poll state so it shows up in the Worker logs
+export function emailUnread(diag) {
+    return http.get('/email/unread', {params: diag, noMsg: true, timeout: 15 * 1000})
 }
 
 export function emailList(accountId, allReceive, emailId, timeSort, size, type) {
