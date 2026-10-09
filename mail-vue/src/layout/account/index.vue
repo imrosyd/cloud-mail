@@ -61,7 +61,6 @@
               </el-dropdown>
             </div>
           </div>
-          <div class="domain-tag" :style="{color: domainColor(domainOf(item.email))}">@{{ domainOf(item.email) }}</div>
         </el-card>
         </template>
 
@@ -408,11 +407,13 @@ function domainOf(email = '') {
   return email.split('@')[1]?.toLowerCase() || ''
 }
 
-// Same domain always gets the same color
+// Same domain always gets the same color, taken from the app's Ant-style palette
+const DOMAIN_COLORS = ['#1890ff', '#13c2c2', '#722ed1', '#52c41a', '#faad14', '#2f54eb', '#eb2f96', '#fa8c16']
+
 function domainColor(domain) {
   let hash = 0
   for (const ch of domain) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0
-  return `hsl(${hash % 360}, 60%, 48%)`
+  return DOMAIN_COLORS[hash % DOMAIN_COLORS.length]
 }
 
 const domainFilter = ref('')
@@ -855,17 +856,9 @@ path[fill="#ffdda1"] {
 }
 
 .item {
-  border-left: 4px solid var(--domain-color) !important;
+  border-left: 3px solid var(--domain-color) !important;
 }
 
-.domain-tag {
-  margin-top: 8px;
-  font-size: 12px;
-  font-weight: 600;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
 
 .domain-group {
   display: flex;
