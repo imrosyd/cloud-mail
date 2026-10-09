@@ -119,28 +119,26 @@ export function useMailNotifier() {
     let lastId = null
     let timer = null
     let stopped = false
-    let running = false
-    let pending = false
+    // Every poll gets a number; only the newest one may apply its result.
+    // Polls never wait on each other, so one hung request can't freeze the count.
+    let seq = 0
 
     async function poll() {
         if (stopped) return
-        // A request made mid-poll (e.g. a mail was just read) runs right after,
-        // so the count never stays stale until the next interval
-        if (running) {
-            pending = true
-            return
-        }
-        running = true
+        const mine = ++seq
         try {
             const stat = await emailUnread()
+            if (mine !== seq || stopped) return
+
             notifyStore.unreadTotal = stat.total
             notifyStore.unreadAccounts = stat.accounts
 
             if (lastId === null) {
                 lastId = stat.latestId
             } else if (stat.latestId > lastId) {
-                const list = await emailLatest(lastId, 0, 1)
+                const from = lastId
                 lastId = stat.latestId
+                const list = await emailLatest(from, 0, 1)
                 if (list.length > 0) {
                     notifyStore.pushIncoming(list)
                     announce(list, notifyStore)
@@ -151,17 +149,15 @@ export function useMailNotifier() {
                 stopped = true
                 warnSessionExpired()
             }
-        } finally {
-            running = false
-            if (pending) {
-                pending = false
-                poll()
-            }
         }
     }
 
+    // Watchdog: if the timer chain ever dies, the next check restarts it
+    let lastScheduled = 0
+
     function schedule() {
         clearTimeout(timer)
+        lastScheduled = Date.now()
         if (stopped) return
         const sec = document.hidden
             ? HIDDEN_INTERVAL
@@ -184,11 +180,19 @@ export function useMailNotifier() {
         schedule()
     }
 
+    function onFocus() {
+        poll()
+        if (Date.now() - lastScheduled > (HIDDEN_INTERVAL + 30) * 1000) schedule()
+    }
+
     watch(() => [notifyStore.unreadTotal, settingStore.settings.title], updateTitle)
     watch(() => notifyStore.refreshTick, poll)
+    // Moving between pages (e.g. back to the inbox) always re-checks the count
+    const removeRouteHook = router.afterEach(() => onFocus())
 
     onMounted(async () => {
         document.addEventListener('visibilitychange', onVisible)
+        window.addEventListener('focus', onFocus)
         await poll()
         updateTitle()
         schedule()
@@ -198,6 +202,8 @@ export function useMailNotifier() {
         stopped = true
         clearTimeout(timer)
         document.removeEventListener('visibilitychange', onVisible)
+        window.removeEventListener('focus', onFocus)
+        removeRouteHook()
         setFaviconBadge(false)
     })
 }

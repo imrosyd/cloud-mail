@@ -2,7 +2,7 @@ import http from '@/axios/index.js';
 import {useNotifyStore} from '@/store/notify.js';
 
 export function emailUnread() {
-    return http.get('/email/unread', {noMsg: true})
+    return http.get('/email/unread', {noMsg: true, timeout: 15 * 1000})
 }
 
 export function emailList(accountId, allReceive, emailId, timeSort, size, type) {
