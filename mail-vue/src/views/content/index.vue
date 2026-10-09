@@ -180,8 +180,14 @@ function changeStar() {
   }
 }
 
+// Go back to wherever the mail was opened from; when /message was opened
+// directly (new tab, link) there is no previous page, so go to the inbox
 const handleBack = () => {
-  router.back()
+  if (window.history.state?.back) {
+    router.back()
+  } else {
+    router.replace({name: 'email'})
+  }
 }
 
 const handleDelete = () => {
