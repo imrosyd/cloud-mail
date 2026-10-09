@@ -128,12 +128,7 @@ export function useMailNotifier() {
         if (stopped) return
         const mine = ++seq
         try {
-            const stat = await emailUnread({
-                shown: notifyStore.unreadTotal,
-                seq: mine,
-                applied: appliedSeq,
-                hidden: document.hidden ? 1 : 0,
-            })
+            const stat = await emailUnread()
             if (mine < appliedSeq || stopped) return
             appliedSeq = mine
 
@@ -176,10 +171,17 @@ export function useMailNotifier() {
         }, sec * 1000)
     }
 
-    function updateTitle() {
+    // The browser keeps a title per history entry and shows that stored title
+    // after a back/forward navigation. It only refreshes the tab when the title
+    // changes, so `force` writes a different value first to make it re-read.
+    // The temp value needs a zero-width space: trailing spaces are trimmed and
+    // would count as the same title.
+    function updateTitle(force = false) {
         const base = settingStore.settings.title || 'Cloud Mail'
         const n = notifyStore.unreadTotal
-        document.title = n > 0 ? `(${n > 99 ? '99+' : n}) ${base}` : base
+        const title = n > 0 ? `(${n > 99 ? '99+' : n}) ${base}` : base
+        if (force) document.title = title + '\u200B'
+        document.title = title
         setFaviconBadge(n > 0)
     }
 
@@ -195,8 +197,12 @@ export function useMailNotifier() {
 
     watch(() => [notifyStore.unreadTotal, settingStore.settings.title], updateTitle)
     watch(() => notifyStore.refreshTick, poll)
-    // Moving between pages (e.g. back to the inbox) always re-checks the count
-    const removeRouteHook = router.afterEach(() => onFocus())
+    // Moving between pages (e.g. back to the inbox) re-syncs the tab title
+    // and re-checks the count
+    const removeRouteHook = router.afterEach(() => {
+        setTimeout(() => updateTitle(true), 0)
+        onFocus()
+    })
 
     onMounted(async () => {
         document.addEventListener('visibilitychange', onVisible)
