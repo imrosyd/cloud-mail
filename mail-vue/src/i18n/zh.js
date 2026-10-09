@@ -345,6 +345,12 @@ const zh = {
     notifyBlocked: '浏览器已阻止通知',
     newEmailFrom: '来自 {name} 的新邮件',
     noSubject: '(无主题)',
-    sessionExpired: '会话已过期，自动刷新已停止，请重新登录。'
+    sessionExpired: '会话已过期，自动刷新已停止，请重新登录。',
+    allDomains: '全部域名',
+    sortDefault: '默认（置顶）',
+    sortDomain: '域名',
+    sortEmail: '地址 A–Z',
+    sortUnread: '未读最多',
+    sortNewest: '最新创建'
 }
 export default zh

@@ -347,7 +347,13 @@ const en = {
     notifyBlocked: 'Notifications are blocked in the browser',
     newEmailFrom: 'New email from {name}',
     noSubject: '(no subject)',
-    sessionExpired: 'Session expired, auto refresh stopped. Please log in again.'
+    sessionExpired: 'Session expired, auto refresh stopped. Please log in again.',
+    allDomains: 'All domains',
+    sortDefault: 'Default (pinned)',
+    sortDomain: 'Domain',
+    sortEmail: 'Address A–Z',
+    sortUnread: 'Most unread',
+    sortNewest: 'Newest first'
 }
 
 export default en

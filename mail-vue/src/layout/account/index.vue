@@ -3,10 +3,36 @@
     <div class="head-opt">
       <Icon v-perm="'account:add'" class="icon add" icon="ion:add-outline" width="23" height="23" @click="add"/>
       <Icon class="icon refresh" icon="ion:reload" width="18" height="18" @click="refresh"/>
+      <div class="list-tools">
+        <el-select v-model="domainFilter" size="small" class="domain-filter" clearable
+                   :placeholder="$t('allDomains')" @visible-change="v => v && ensureAll()">
+          <el-option v-for="d in domainOptions" :key="d.domain" :value="d.domain" :label="`${d.domain} (${d.count})`">
+            <span class="domain-dot" :style="{background: domainColor(d.domain)}"></span>
+            <span>{{ d.domain }}</span>
+            <span class="domain-count">{{ d.count }}</span>
+          </el-option>
+        </el-select>
+        <el-dropdown trigger="click" @command="changeSort">
+          <Icon class="icon" :class="{'sort-active': accountStore.sortBy !== 'default'}" icon="mdi:sort" width="20" height="20"/>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item v-for="o in sortOptions" :key="o.value" :command="o.value"
+                                :class="{'sort-chosen': accountStore.sortBy === o.value}">{{ o.label }}</el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
+      </div>
     </div>
     <el-scrollbar class="scrollbar" ref="scrollbarRef">
       <div v-infinite-scroll="getAccountList" :infinite-scroll-distance="600" :infinite-scroll-immediate="false">
-        <el-card class="item" :class="itemBg(item.accountId)" v-for="(item, index) in accounts" :key="item.accountId"
+        <template v-for="item in displayAccounts" :key="item.accountId">
+        <div class="domain-group" v-if="groupStarts.has(item.accountId)">
+          <span class="domain-dot" :style="{background: domainColor(domainOf(item.email))}"></span>
+          {{ domainOf(item.email) }}
+          <span class="domain-count">{{ domainCounts[domainOf(item.email)] }}</span>
+        </div>
+        <el-card class="item" :class="itemBg(item.accountId)"
+                 :style="{'--domain-color': domainColor(domainOf(item.email))}"
                  @click="changeAccount(item)">
           <div class="account">
             {{ item.email }}
@@ -26,7 +52,7 @@
                 <template #dropdown>
                   <el-dropdown-menu>
                     <el-dropdown-item v-if="hasPerm('email:send')" @click="openSetName(item)">{{ $t('rename') }}</el-dropdown-item>
-                    <el-dropdown-item v-if="item.accountId !== userStore.user.account.accountId" @click="setAsTop(item, index)">{{ $t('pin') }}</el-dropdown-item>
+                    <el-dropdown-item v-if="item.accountId !== userStore.user.account.accountId" @click="setAsTop(item)">{{ $t('pin') }}</el-dropdown-item>
                     <el-dropdown-item v-if="item.accountId !== userStore.user.account.accountId && hasPerm('account:delete')"
                                       @click="remove(item)">{{ $t('delete') }}
                     </el-dropdown-item>
@@ -35,7 +61,9 @@
               </el-dropdown>
             </div>
           </div>
+          <div class="domain-tag" :style="{color: domainColor(domainOf(item.email))}">@{{ domainOf(item.email) }}</div>
         </el-card>
+        </template>
 
         <!-- Initial Loading Skeleton -->
         <template v-if="loading">
@@ -137,7 +165,8 @@ import {
   accountDelete,
   accountSetName,
   accountSetAllReceive,
-  accountSetAsTop
+  accountSetAsTop,
+  accountListAll
 } from "@/request/account.js";
 import {sleep} from "@/utils/time-utils.js"
 import {isEmail} from "@/utils/verify-utils.js";
@@ -356,7 +385,8 @@ function add() {
   }, 100)
 }
 
-function setAsTop(account, index) {
+function setAsTop(account) {
+  const index = accounts.findIndex(item => item.accountId === account.accountId)
   accountSetAsTop(account.accountId).then(() => {
     ElMessage({
       message: t('setSuccess'),
@@ -374,7 +404,113 @@ async function copyAccount(account) {
   await copy(account)
 }
 
+function domainOf(email = '') {
+  return email.split('@')[1]?.toLowerCase() || ''
+}
+
+// Same domain always gets the same color
+function domainColor(domain) {
+  let hash = 0
+  for (const ch of domain) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0
+  return `hsl(${hash % 360}, 60%, 48%)`
+}
+
+const domainFilter = ref('')
+
+const sortOptions = computed(() => [
+  {value: 'default', label: t('sortDefault')},
+  {value: 'domain', label: t('sortDomain')},
+  {value: 'email', label: t('sortEmail')},
+  {value: 'unread', label: t('sortUnread')},
+  {value: 'newest', label: t('sortNewest')},
+])
+
+const domainCounts = computed(() => {
+  const counts = {}
+  for (const a of accounts) {
+    const d = domainOf(a.email)
+    counts[d] = (counts[d] || 0) + 1
+  }
+  return counts
+})
+
+const domainOptions = computed(() => Object.entries(domainCounts.value)
+    .map(([domain, count]) => ({domain, count}))
+    .sort((a, b) => a.domain.localeCompare(b.domain)))
+
+const displayAccounts = computed(() => {
+  const sortBy = accountStore.sortBy
+  let list = accounts.filter(a => !domainFilter.value || domainOf(a.email) === domainFilter.value)
+
+  if (sortBy !== 'default') {
+    const mainId = userStore.user.account?.accountId
+    const main = list.filter(a => a.accountId === mainId)
+    const rest = list.filter(a => a.accountId !== mainId)
+    const unread = notifyStore.unreadAccounts
+    const byEmail = (a, b) => a.email.localeCompare(b.email)
+    const compare = {
+      email: byEmail,
+      domain: (a, b) => domainOf(a.email).localeCompare(domainOf(b.email)) || byEmail(a, b),
+      unread: (a, b) => (unread[b.accountId] || 0) - (unread[a.accountId] || 0) || byEmail(a, b),
+      newest: (a, b) => b.accountId - a.accountId,
+    }[sortBy]
+    list = [...main, ...rest.sort(compare)]
+  }
+
+  return list
+})
+
+// Accounts that open a new domain section when sorted by domain
+const groupStarts = computed(() => {
+  const ids = new Set()
+  if (accountStore.sortBy !== 'domain' || domainFilter.value) return ids
+  const mainId = userStore.user.account?.accountId
+  let prev = null
+  for (const a of displayAccounts.value) {
+    if (a.accountId === mainId) continue
+    const d = domainOf(a.email)
+    if (d !== prev) ids.add(a.accountId)
+    prev = d
+  }
+  return ids
+})
+
+let loadingAll = null
+
+// Sorting and filtering need every account, not just the loaded page
+function ensureAll() {
+  if (noLoading.value) return Promise.resolve()
+  if (loadingAll) return loadingAll
+  loadingAll = accountListAll().then(list => {
+    accounts.splice(0, accounts.length, ...list)
+    noLoading.value = true
+  }).finally(() => {
+    loadingAll = null
+  })
+  return loadingAll
+}
+
+function changeSort(value) {
+  accountStore.sortBy = value
+  if (value !== 'default') ensureAll()
+}
+
+watch(domainFilter, v => v && ensureAll())
+
 function getAccountList() {
+
+  if (accountStore.sortBy !== 'default' && accounts.length === 0) {
+    loading.value = true
+    accountListAll().then(list => {
+      accounts.push(...list)
+      accountStore.currentAccount = list[0]
+      noLoading.value = true
+      first = false
+    }).finally(() => {
+      loading.value = false
+    })
+    return
+  }
 
   if (loading.value || followLoading.value || noLoading.value) return;
 
@@ -502,6 +638,27 @@ function submit() {
 }
 </script>
 <style>
+.domain-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+.domain-count {
+  float: right;
+  margin-left: 12px;
+  color: var(--el-text-color-secondary);
+  font-size: 12px;
+}
+
+.sort-chosen {
+  color: var(--el-color-primary) !important;
+  font-weight: bold;
+}
+
 path[fill="#ffdda1"] {
   fill: #ffdd7d;
 }
@@ -680,5 +837,49 @@ path[fill="#ffdda1"] {
   text-align: center;
   vertical-align: middle;
   box-sizing: border-box;
+}
+
+.list-tools {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  .domain-filter {
+    width: 130px;
+  }
+
+  .sort-active {
+    color: var(--el-color-primary);
+  }
+}
+
+.item {
+  border-left: 4px solid var(--domain-color) !important;
+}
+
+.domain-tag {
+  margin-top: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.domain-group {
+  display: flex;
+  align-items: center;
+  margin: 14px 12px 8px;
+  font-size: 12px;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  color: var(--el-text-color-secondary);
+
+  .domain-count {
+    float: none;
+    margin-left: 6px;
+  }
 }
 </style>

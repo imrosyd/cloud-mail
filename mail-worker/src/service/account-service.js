@@ -105,13 +105,18 @@ const accountService = {
 
 	list(c, params, userId) {
 
-		let { accountId, size, lastSort } = params;
+		let { accountId, size, lastSort, all } = params;
 
 		accountId = Number(accountId);
 		size = Number(size);
 		lastSort = Number(lastSort);
 
-		if (size > 30) {
+		// all=1 returns every account at once so the client can sort and group them
+		if (Number(all) === 1) {
+			size = 1000;
+			accountId = 0;
+			lastSort = NaN;
+		} else if (size > 30) {
 			size = 30;
 		}
 

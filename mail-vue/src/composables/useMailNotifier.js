@@ -132,7 +132,10 @@ export function useMailNotifier() {
             } else if (stat.latestId > lastId) {
                 const list = await emailLatest(lastId, 0, 1)
                 lastId = stat.latestId
-                if (list.length > 0) announce(list, notifyStore)
+                if (list.length > 0) {
+                    notifyStore.pushIncoming(list)
+                    announce(list, notifyStore)
+                }
             }
         } catch (e) {
             if (e?.code === 401 || e?.code === 403) {

@@ -27,6 +27,7 @@ import {warnSessionExpired} from '@/composables/useMailNotifier.js'
 import {useAccountStore} from "@/store/account.js";
 import {useEmailStore} from "@/store/email.js";
 import {useSettingStore} from "@/store/setting.js";
+import {useNotifyStore} from "@/store/notify.js";
 import emailScroll from "@/components/email-scroll/index.vue"
 import {emailList, emailDelete, emailLatest, emailRead} from "@/request/email.js";
 import {starAdd, starCancel} from "@/request/star.js";
@@ -44,6 +45,7 @@ const route = useRoute();
 const emailStore = useEmailStore();
 const accountStore = useAccountStore();
 const settingStore = useSettingStore();
+const notifyStore = useNotifyStore();
 const scroll = ref({})
 const params = reactive({
   timeSort: 0,
@@ -54,6 +56,21 @@ onMounted(() => {
   latest()
 })
 
+
+// New mail found by the global notifier goes straight into the list,
+// so the list updates together with the badge and the toast
+watch(() => notifyStore.incomingTick, () => {
+  if (scroll.value.firstLoad) return
+  const accountId = accountStore.currentAccountId
+  const allReceive = accountStore.currentAccount.allReceive
+  const list = [...notifyStore.incoming].sort((a, b) => a.emailId - b.emailId)
+  for (const email of list) {
+    if (!allReceive && email.accountId !== accountId) continue
+    if (existIds.has(email.emailId)) continue
+    existIds.add(email.emailId)
+    scroll.value.addItem({...email, reqAccountId: accountId, allReceive})
+  }
+})
 
 watch(() => accountStore.currentAccountId, () => {
   scroll.value.refreshList();

@@ -347,7 +347,13 @@ const id = {
     notifyBlocked: 'Izin notifikasi diblokir di browser',
     newEmailFrom: 'Email baru dari {name}',
     noSubject: '(tanpa subjek)',
-    sessionExpired: 'Sesi berakhir, perbarui otomatis dihentikan. Silakan login ulang.'
+    sessionExpired: 'Sesi berakhir, perbarui otomatis dihentikan. Silakan login ulang.',
+    allDomains: 'Semua domain',
+    sortDefault: 'Bawaan (disematkan)',
+    sortDomain: 'Domain',
+    sortEmail: 'Alamat A–Z',
+    sortUnread: 'Belum dibaca terbanyak',
+    sortNewest: 'Terbaru dibuat'
 }
 
 export default id
