@@ -353,7 +353,8 @@ const en = {
     sortDomain: 'Domain',
     sortEmail: 'Address A–Z',
     sortUnread: 'Most unread',
-    sortNewest: 'Newest first'
+    sortNewest: 'Newest first',
+    domainColors: 'Domain Colors'
 }
 
 export default en

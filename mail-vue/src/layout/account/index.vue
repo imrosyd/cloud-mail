@@ -4,6 +4,7 @@
       <Icon v-perm="'account:add'" class="icon add" icon="ion:add-outline" width="23" height="23" @click="add"/>
       <Icon class="icon refresh" icon="ion:reload" width="18" height="18" @click="refresh"/>
       <div class="list-tools">
+        <Icon class="icon" icon="ion:color-palette-outline" width="19" height="19" @click="openColors"/>
         <el-select v-model="domainFilter" size="small" class="domain-filter" clearable
                    :placeholder="$t('allDomains')" @visible-change="v => v && ensureAll()">
           <el-option v-for="d in domainOptions" :key="d.domain" :value="d.domain" :label="`${d.domain} (${d.count})`">
@@ -13,7 +14,7 @@
           </el-option>
         </el-select>
         <el-dropdown trigger="click" @command="changeSort">
-          <Icon class="icon" :class="{'sort-active': accountStore.sortBy !== 'default'}" icon="mdi:sort" width="20" height="20"/>
+          <Icon class="icon" :class="{'sort-active': accountStore.sortBy !== 'default'}" icon="ion:swap-vertical-outline" width="19" height="19"/>
           <template #dropdown>
             <el-dropdown-menu>
               <el-dropdown-item v-for="o in sortOptions" :key="o.value" :command="o.value"
@@ -103,6 +104,22 @@
       </div>
 
     </el-scrollbar>
+    <el-dialog v-model="colorShow" :title="$t('domainColors')" width="360">
+      <div class="color-list">
+        <div class="color-row" v-for="d in domainOptions" :key="d.domain">
+          <el-color-picker v-model="colorDraft[d.domain]" :predefine="DOMAIN_COLORS" size="small"/>
+          <span class="color-domain">{{ d.domain }}</span>
+          <span class="domain-count">{{ d.count }}</span>
+          <Icon v-if="customColors[d.domain] || colorDraft[d.domain] !== defaultColor(d.domain)"
+                class="icon color-reset" icon="mdi:restore" width="16" height="16"
+                :title="$t('reset')" @click="colorDraft[d.domain] = defaultColor(d.domain)"/>
+        </div>
+      </div>
+      <template #footer>
+        <el-button @click="colorShow = false">{{ $t('cancel') }}</el-button>
+        <el-button type="primary" :loading="colorSaving" @click="saveColors">{{ $t('save') }}</el-button>
+      </template>
+    </el-dialog>
     <el-dialog v-model="showAdd" :title="$t('addAccount')">
       <div class="container">
         <el-input v-model="addForm.email" ref="addRef" type="text" :placeholder="$t('emailAccount')" autocomplete="off">
@@ -169,6 +186,7 @@ import {
   accountSetSort
 } from "@/request/account.js";
 import Sortable from 'sortablejs'
+import {getDomainColors, saveDomainColors} from "@/request/my.js";
 import {sleep} from "@/utils/time-utils.js"
 import {isEmail} from "@/utils/verify-utils.js";
 import {useSettingStore} from "@/store/setting.js";
@@ -422,9 +440,43 @@ const domainIndex = computed(() => {
   return map
 })
 
-function domainColor(domain) {
+function defaultColor(domain) {
   const i = domainIndex.value[domain] ?? 0
   return DOMAIN_COLORS[i % DOMAIN_COLORS.length]
+}
+
+// User-chosen colors (saved per user on the server) override the defaults
+const customColors = ref({})
+const colorShow = ref(false)
+const colorSaving = ref(false)
+const colorDraft = reactive({})
+
+function domainColor(domain) {
+  return customColors.value[domain] || defaultColor(domain)
+}
+
+getDomainColors().then(colors => { customColors.value = colors || {} }).catch(() => {})
+
+async function openColors() {
+  await ensureAll()
+  for (const k of Object.keys(colorDraft)) delete colorDraft[k]
+  for (const {domain} of domainOptions.value) colorDraft[domain] = domainColor(domain)
+  colorShow.value = true
+}
+
+function saveColors() {
+  const colors = {}
+  for (const [domain, color] of Object.entries(colorDraft)) {
+    if (color && color.toLowerCase() !== defaultColor(domain)) colors[domain] = color.toLowerCase()
+  }
+  colorSaving.value = true
+  saveDomainColors(colors).then(saved => {
+    customColors.value = saved
+    colorShow.value = false
+    ElMessage({message: t('saveSuccessMsg'), type: 'success', plain: true})
+  }).finally(() => {
+    colorSaving.value = false
+  })
 }
 
 const domainFilter = ref('')
@@ -917,6 +969,7 @@ path[fill="#ffdda1"] {
   display: flex;
   align-items: center;
   gap: 8px;
+  padding-left: 10px;
 
   .domain-filter {
     width: 130px;
@@ -954,5 +1007,36 @@ path[fill="#ffdda1"] {
 
 .item-ghost {
   opacity: .4;
+}
+
+.color-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 50vh;
+  overflow-y: auto;
+}
+
+.color-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  .color-domain {
+    flex: 1;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .domain-count {
+    float: none;
+    margin-left: 0;
+  }
+
+  .color-reset {
+    cursor: pointer;
+    color: var(--el-text-color-secondary);
+  }
 }
 </style>

@@ -353,7 +353,8 @@ const id = {
     sortDomain: 'Domain',
     sortEmail: 'Alamat A–Z',
     sortUnread: 'Belum dibaca terbanyak',
-    sortNewest: 'Terbaru dibuat'
+    sortNewest: 'Terbaru dibuat',
+    domainColors: 'Warna Domain'
 }
 
 export default id

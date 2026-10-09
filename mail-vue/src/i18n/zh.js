@@ -351,6 +351,7 @@ const zh = {
     sortDomain: '域名',
     sortEmail: '地址 A–Z',
     sortUnread: '未读最多',
-    sortNewest: '最新创建'
+    sortNewest: '最新创建',
+    domainColors: '域名颜色'
 }
 export default zh
