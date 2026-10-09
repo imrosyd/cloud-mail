@@ -76,6 +76,18 @@ function updateContent() {
       ${cleanedHtml}
     </div>
   `;
+
+  openLinksInNewTab();
+}
+
+// Links in an email open in a new tab instead of replacing the app
+function openLinksInNewTab() {
+  shadowRoot.querySelectorAll('a[href]').forEach(a => {
+    const href = a.getAttribute('href').trim().toLowerCase();
+    if (href.startsWith('#') || href.startsWith('mailto:') || href.startsWith('tel:')) return;
+    a.setAttribute('target', '_blank');
+    a.setAttribute('rel', 'noopener noreferrer');
+  });
 }
 
 function autoScale() {
