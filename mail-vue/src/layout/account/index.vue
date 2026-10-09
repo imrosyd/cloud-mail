@@ -1,10 +1,16 @@
 <template>
   <div class="account-box">
     <div class="head-opt">
-      <Icon v-perm="'account:add'" class="icon add" icon="ion:add-outline" width="23" height="23" @click="add"/>
-      <Icon class="icon refresh" icon="ion:reload" width="18" height="18" @click="refresh"/>
+      <button v-perm="'account:add'" class="tool-btn" :title="$t('addAccount')" @click="add">
+        <Icon icon="ion:add-outline" width="20" height="20"/>
+      </button>
+      <button class="tool-btn" :class="{spinning: loading}" :title="$t('toolRefresh')" @click="refresh">
+        <Icon icon="ion:refresh-outline" width="18" height="18"/>
+      </button>
       <div class="list-tools">
-        <Icon class="icon" icon="ion:color-palette-outline" width="19" height="19" @click="openColors"/>
+        <button class="tool-btn" :class="{active: Object.keys(customColors).length > 0}" :title="$t('domainColors')" @click="openColors">
+          <Icon icon="ion:color-palette-outline" width="18" height="18"/>
+        </button>
         <el-select v-model="domainFilter" size="small" class="domain-filter" clearable
                    :placeholder="$t('allDomains')" @visible-change="v => v && ensureAll()">
           <el-option v-for="d in domainOptions" :key="d.domain" :value="d.domain" :label="`${d.domain} (${d.count})`">
@@ -14,7 +20,9 @@
           </el-option>
         </el-select>
         <el-dropdown trigger="click" @command="changeSort">
-          <Icon class="icon" :class="{'sort-active': accountStore.sortBy !== 'default'}" icon="ion:swap-vertical-outline" width="19" height="19"/>
+          <button class="tool-btn" :class="{active: accountStore.sortBy !== 'default'}" :title="$t('toolSort')">
+            <Icon icon="ion:swap-vertical-outline" width="18" height="18"/>
+          </button>
           <template #dropdown>
             <el-dropdown-menu>
               <el-dropdown-item v-for="o in sortOptions" :key="o.value" :command="o.value"
@@ -803,22 +811,8 @@ path[fill="#ffdda1"] {
     box-shadow: var(--header-actions-border);
     padding-left: 10px;
     padding-right: 10px;
-
-    .icon {
-      cursor: pointer;
-    }
-
-    .refresh {
-      margin-left: 10px;
-    }
-
-    .add {
-      margin-left: 2px;
-    }
-
-    .head-opt:not(.add) .refresh {
-      margin-left: 5px;
-    }
+    // One gap for every button, so a hidden button never leaves a hole
+    gap: 4px;
   }
 
   .scrollbar {
@@ -964,19 +958,18 @@ path[fill="#ffdda1"] {
   box-sizing: border-box;
 }
 
+// Takes the remaining width so the icons keep equal spacing whichever buttons are shown
 .list-tools {
-  margin-left: auto;
+  flex: 1;
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding-left: 10px;
+  gap: 4px;
+  min-width: 0;
 
   .domain-filter {
-    width: 130px;
-  }
-
-  .sort-active {
-    color: var(--el-color-primary);
+    flex: 1;
+    min-width: 0;
+    margin: 0 4px;
   }
 }
 
@@ -1037,6 +1030,64 @@ path[fill="#ffdda1"] {
   .color-reset {
     cursor: pointer;
     color: var(--el-text-color-secondary);
+  }
+}
+
+// Toolbar buttons share one size, hover and active style
+.tool-btn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--el-text-color-regular);
+  cursor: pointer;
+  position: relative;
+  transition: background-color .15s, color .15s;
+
+  &:hover {
+    background: var(--el-fill-color);
+    color: var(--el-text-color-primary);
+  }
+
+  &:active {
+    background: var(--el-fill-color-dark);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--el-color-primary);
+    outline-offset: 1px;
+  }
+
+  // Small dot marks a tool that is not at its default
+  &.active {
+    color: var(--el-color-primary);
+
+    &::after {
+      content: '';
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--el-color-primary);
+    }
+  }
+
+  &.spinning svg {
+    animation: tool-spin .8s linear infinite;
+  }
+}
+
+@keyframes tool-spin {
+  to {
+    transform: rotate(360deg);
   }
 }
 </style>

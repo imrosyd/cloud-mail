@@ -354,7 +354,9 @@ const en = {
     sortEmail: 'Address A–Z',
     sortUnread: 'Most unread',
     sortNewest: 'Newest first',
-    domainColors: 'Domain Colors'
+    domainColors: 'Domain Colors',
+    toolRefresh: 'Reload',
+    toolSort: 'Sort'
 }
 
 export default en
