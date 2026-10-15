@@ -279,6 +279,17 @@ function linuxDoLogin() {
 
 linuxDoGetUser();
 
+function showNoticeOnce() {
+  // Announcement opens automatically only when it changed since this device last saw it
+  const n = settingStore.settings
+  const stamp = [n.noticeTitle, n.noticeContent].join('|')
+  try {
+    if (localStorage.getItem('noticeSeen') === stamp) return
+    localStorage.setItem('noticeSeen', stamp)
+  } catch (e) {}
+  uiStore.showNotice()
+}
+
 async function linuxDoGetUser() {
 
   const params = new URLSearchParams(window.location.search)
@@ -421,7 +432,7 @@ async function saveToken(token) {
     router.addRoute('layout', routerData);
   });
   await router.replace({name: 'layout'})
-  uiStore.showNotice()
+  showNoticeOnce()
   oauthLoading.value = false;
   bindLoading.value = false;
 }

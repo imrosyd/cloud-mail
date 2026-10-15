@@ -1,26 +1,26 @@
 <template>
   <div class="account-box">
     <div class="head-opt">
-      <button v-perm="'account:add'" class="tool-btn" :title="$t('addAccount')" @click="add">
-        <Icon icon="ion:add-outline" width="20" height="20"/>
+      <button v-perm="'account:add'" class="tool-btn tool-add" :title="$t('addAccount')" :aria-label="$t('addAccount')" @click="add">
+        <Icon icon="ion:add" width="20" height="20"/>
       </button>
-      <button class="tool-btn" :class="{spinning: loading}" :title="$t('toolRefresh')" @click="refresh">
-        <Icon icon="ion:refresh-outline" width="18" height="18"/>
-      </button>
-      <div class="list-tools">
-        <button class="tool-btn" :class="{active: Object.keys(customColors).length > 0}" :title="$t('domainColors')" @click="openColors">
-          <Icon icon="ion:color-palette-outline" width="18" height="18"/>
-        </button>
-        <el-select v-model="domainFilter" size="small" class="domain-filter" clearable
-                   :placeholder="$t('allDomains')" @visible-change="v => v && ensureAll()">
+      <el-select v-model="domainFilter" size="small" class="domain-filter" clearable
+                   :placeholder="$t('accDomains')" @visible-change="v => v && ensureAll()">
           <el-option v-for="d in domainOptions" :key="d.domain" :value="d.domain" :label="`${d.domain} (${d.count})`">
             <span class="domain-dot" :style="{background: domainColor(d.domain)}"></span>
             <span>{{ d.domain }}</span>
             <span class="domain-count">{{ d.count }}</span>
           </el-option>
         </el-select>
+      <div class="tool-group">
+        <button class="tool-btn" :class="{spinning: loading}" :title="$t('toolRefresh')" :aria-label="$t('toolRefresh')" @click="refresh">
+          <Icon icon="ion:refresh-outline" width="18" height="18"/>
+        </button>
+        <button class="tool-btn tool-colors" :class="{active: Object.keys(customColors).length > 0}" :title="$t('domainColors')" :aria-label="$t('domainColors')" @click="openColors">
+          <Icon icon="ion:color-palette-outline" width="18" height="18"/>
+        </button>
         <el-dropdown trigger="click" @command="changeSort">
-          <button class="tool-btn" :class="{active: accountStore.sortBy !== 'default'}" :title="$t('toolSort')">
+          <button class="tool-btn" :aria-label="$t('toolSort')" :class="{active: accountStore.sortBy !== 'default'}" :title="$t('toolSort')">
             <Icon icon="ion:swap-vertical-outline" width="18" height="18"/>
           </button>
           <template #dropdown>
@@ -43,21 +43,30 @@
         <el-card class="item" :class="[itemBg(item.accountId), isMain(item) ? 'item-main' : '', canDrag ? 'item-drag' : '']"
                  :style="{'--domain-color': domainColor(domainOf(item.email))}"
                  @click="changeAccount(item)">
-          <div class="account">
-            {{ item.email }}
-            <span class="unread-count" v-if="notifyStore.unreadAccounts[item.accountId]">{{ notifyStore.unreadAccounts[item.accountId] > 99 ? '99+' : notifyStore.unreadAccounts[item.accountId] }}</span>
-          </div>
-          <div class="opt">
-            <div class="send-email" @click.stop>
-              <Icon @click="setAllReceive(item)" v-if="!item.allReceive" icon="eva:email-fill" width="22" height="22" color="#fccb1a"/>
-              <Icon @click="setAllReceive(item)" v-else icon="flat-color-icons:folder" width="22" height="22" color="#23c4f1" />
+          <div class="account-row">
+            <div class="account" :title="item.email">
+              <span class="local">{{ item.email.split('@')[0] }}</span><span class="dom">@{{ domainOf(item.email) }}</span>
             </div>
-            <div class="settings" @click.stop>
-              <Icon icon="fluent-color:clipboard-24" width="22" height="22" @click.stop="copyAccount(item.email)"/>
-              <Icon icon="fluent:settings-24-filled" width="21" height="21" color="#909399"
-                    v-if="showNullSetting(item)"/>
-              <el-dropdown v-else>
-                <Icon icon="fluent:settings-24-filled" width="21" height="21" color="#909399"/>
+            <Icon v-if="item.allReceive" class="all-flag" icon="ion:folder-open-outline" width="16" height="16"
+                  :title="$t('allReceiveOn')"/>
+            <span class="unread-count" v-if="notifyStore.unreadAccounts[item.accountId]">{{ notifyStore.unreadAccounts[item.accountId] > 99 ? '99+' : notifyStore.unreadAccounts[item.accountId] }}</span>
+            <div class="opt" @click.stop>
+              <button class="acc-btn" type="button"
+                      :title="item.allReceive ? $t('allReceiveOn') : $t('allReceiveOff')"
+                      :aria-label="item.allReceive ? $t('allReceiveOn') : $t('allReceiveOff')"
+                      @click="setAllReceive(item)">
+                <Icon :icon="item.allReceive ? 'ion:folder-open-outline' : 'ion:mail-outline'" width="17" height="17"/>
+              </button>
+              <button class="acc-btn" type="button" :title="$t('accCopy')" :aria-label="$t('accCopy')" @click.stop="copyAccount(item.email)">
+                <Icon icon="ion:copy-outline" width="16" height="16"/>
+              </button>
+              <button class="acc-btn" type="button" :title="$t('accSettings')" :aria-label="$t('accSettings')" v-if="showNullSetting(item)" disabled>
+                <Icon icon="ion:settings-outline" width="17" height="17"/>
+              </button>
+              <el-dropdown v-else trigger="click">
+                <button class="acc-btn" type="button" :title="$t('accSettings')" :aria-label="$t('accSettings')">
+                  <Icon icon="ion:settings-outline" width="17" height="17"/>
+                </button>
                 <template #dropdown>
                   <el-dropdown-menu>
                     <el-dropdown-item v-if="hasPerm('email:send')" @click="openSetName(item)">{{ $t('rename') }}</el-dropdown-item>
@@ -78,11 +87,7 @@
           <el-skeleton v-for="i in skeletonRows" :key="i" animated>
             <template #template>
               <el-card class="item">
-                <el-skeleton-item variant="p" style="width: 70%; height: 20px; margin-bottom: 25px"/>
-                <div style="display: flex; justify-content: space-between">
-                  <el-skeleton-item variant="text" style="width: 20px"/>
-                  <el-skeleton-item variant="text" style="width: 20px"/>
-                </div>
+                <el-skeleton-item variant="text" style="width: 65%; height: 18px"/>
               </el-card>
             </template>
           </el-skeleton>
@@ -93,11 +98,7 @@
           <el-skeleton animated>
             <template #template>
               <el-card class="item">
-                <el-skeleton-item variant="p" style="width: 70%; height: 20px; margin-bottom: 20px"/>
-                <div style="display: flex; justify-content: space-between">
-                  <el-skeleton-item variant="text" style="width: 20px"/>
-                  <el-skeleton-item variant="text" style="width: 20px"/>
-                </div>
+                <el-skeleton-item variant="text" style="width: 65%; height: 18px"/>
               </el-card>
             </template>
           </el-skeleton>
@@ -812,7 +813,7 @@ path[fill="#ffdda1"] {
     padding-left: 10px;
     padding-right: 10px;
     // One gap for every button, so a hidden button never leaves a hole
-    gap: 4px;
+    gap: 6px;
   }
 
   .scrollbar {
@@ -847,36 +848,106 @@ path[fill="#ffdda1"] {
   .item {
     background-color: var(--el-bg-color);
     border-radius: 8px;
-    padding: 12px 10px;
-    margin-bottom: 10px;
+    padding: 9px 8px 9px 10px;
+    margin-bottom: 6px;
     margin-left: 10px;
     margin-right: 10px;
     cursor: pointer;
+    position: relative;
+    transition: background-color .15s, box-shadow .15s;
+
+    &:hover {
+      background-color: var(--email-hover-background);
+    }
+
+    .account-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 28px;
+    }
 
     .account {
-      font-weight: 600;
-      margin-bottom: 20px;
+      flex: 1;
+      min-width: 0;
       overflow: hidden;
       white-space: nowrap;
       text-overflow: ellipsis;
+
+      .local {
+        font-weight: 600;
+        color: var(--el-text-color-primary);
+      }
+
+      .dom {
+        color: var(--el-text-color-secondary);
+        font-size: 13px;
+      }
     }
 
+    .unread-count {
+      flex-shrink: 0;
+      margin-left: 0;
+    }
+
+    .all-flag {
+      flex-shrink: 0;
+      color: var(--el-color-primary);
+    }
+
+    // Overlay, so the address keeps the full width while actions are hidden
     .opt {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      right: 0;
+      display: none;
+      align-items: center;
+      gap: 2px;
+      padding: 0 8px 0 14px;
+      border-radius: 0 8px 8px 0;
+      background: linear-gradient(to right, transparent, var(--opt-bg) 14px);
+    }
+
+    --opt-bg: var(--email-hover-background);
+
+    &.item-choose {
+      --opt-bg: var(--choose-account-background);
+    }
+
+    // Actions fade in on hover, selection or keyboard focus; always visible on touch
+    .acc-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 26px;
+      height: 26px;
+      padding: 0;
+      border: none;
+      border-radius: 6px;
+      background: transparent;
+      color: var(--el-text-color-secondary);
+      cursor: pointer;
+      transition: background-color .15s, color .15s;
+
+      &:hover {
+        background: var(--el-fill-color-dark);
+        color: var(--el-text-color-primary);
+      }
+
+      &:focus-visible {
+        outline: 2px solid var(--el-color-primary);
+      }
+
+      &:disabled {
+        cursor: default;
+      }
+    }
+
+    &:hover .opt,
+    &.item-choose .opt,
+    .opt:focus-within {
       display: flex;
-      justify-content: space-between;
-      font-size: 12px;
-      color: #888;
-
-      .settings {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-      }
-
-      .send-email {
-        display: flex;
-        align-items: center;
-      }
     }
 
     :deep(.el-card__body) {
@@ -890,6 +961,7 @@ path[fill="#ffdda1"] {
 
   .item-choose {
     background: var(--choose-account-background);
+    box-shadow: inset 0 0 0 1px var(--el-color-primary-light-5);
   }
 }
 
@@ -958,18 +1030,46 @@ path[fill="#ffdda1"] {
   box-sizing: border-box;
 }
 
-// Takes the remaining width so the icons keep equal spacing whichever buttons are shown
-.list-tools {
+// Add button, domain filter taking the free width, then the tool group
+.domain-filter {
   flex: 1;
-  display: flex;
-  align-items: center;
-  gap: 4px;
   min-width: 0;
 
-  .domain-filter {
-    flex: 1;
-    min-width: 0;
-    margin: 0 4px;
+  :deep(.el-select__wrapper) {
+    min-height: 28px;
+    padding: 0 8px;
+    border-radius: 6px;
+    box-shadow: none;
+    background: var(--el-fill-color-light);
+    font-size: 13px;
+  }
+
+  :deep(.el-select__wrapper:hover) {
+    background: var(--el-fill-color);
+  }
+
+  :deep(.el-select__wrapper.is-focused) {
+    box-shadow: 0 0 0 1px var(--el-color-primary) inset;
+  }
+}
+
+.tool-group {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding-left: 6px;
+  margin-left: 2px;
+  border-left: 1px solid var(--el-border-color-lighter);
+}
+
+.tool-btn.tool-add {
+  background: var(--el-color-primary-light-9);
+  color: var(--el-color-primary);
+
+  &:hover {
+    background: var(--el-color-primary-light-8);
+    color: var(--el-color-primary);
   }
 }
 
@@ -1066,15 +1166,15 @@ path[fill="#ffdda1"] {
 
   // Small dot marks a tool that is not at its default
   &.active {
-    color: var(--el-color-primary);
 
     &::after {
       content: '';
       position: absolute;
-      top: 4px;
-      right: 4px;
-      width: 5px;
-      height: 5px;
+      top: 3px;
+      right: 3px;
+      width: 6px;
+      height: 6px;
+      box-shadow: 0 0 0 2px var(--el-bg-color);
       border-radius: 50%;
       background: var(--el-color-primary);
     }

@@ -1,30 +1,39 @@
 <template>
-  <div class="email-container">
+  <div class="email-container" :class="{'has-filters': !!$slots.filters}">
     <div class="header-actions">
       <el-checkbox
           v-model="checkAll"
           :indeterminate="isIndeterminate"
           :disabled="!emailList.length || loading"
+          :aria-label="$t('selectAllTip')"
+          :title="$t('selectAllTip')"
           @change="handleCheckAllChange"
       >
       </el-checkbox>
       <div class="header-left" :style="'padding-left:' + actionLeft">
 
         <slot name="first"></slot>
-        <Icon class="icon reload" icon="ion:reload" width="18" height="18" @click="refresh"/>
+        <Icon class="icon reload" icon="ion:reload" width="18" height="18" role="button" tabindex="0"
+              :title="$t('refreshTip')" :aria-label="$t('refreshTip')" @keydown.enter="refresh" @click="refresh"/>
         <Icon v-perm="'email:delete'" class="icon delete" icon="uiw:delete" width="16" height="16"
-              v-if="getSelectedMailsIds().length > 0"
+              v-if="getSelectedMailsIds().length > 0" role="button" tabindex="0"
+              :title="$t('delete')" :aria-label="$t('delete')" @keydown.enter="handleDelete"
               @click="handleDelete"/>
         <Icon v-perm="'email:delete'" class="icon delete" icon="fluent:mail-read-20-regular" width="21" height="21"
-              v-if="getSelectedMailsIds().length > 0 && showUnread"
+              v-if="getSelectedMailsIds().length > 0 && showUnread" role="button" tabindex="0"
+              :title="$t('markReadTip')" :aria-label="$t('markReadTip')" @keydown.enter="handleRead"
               @click="handleRead"/>
       </div>
 
       <div class="header-right">
-        <span class="email-count" v-if="total">{{ $t('emailCount', {total: total}) }}</span>
+        <span class="email-count" v-if="total" :title="$t('shortcutsHint')">{{ $t('emailCount', {total: total}) }}</span>
         <Icon v-if="showAccountIcon" class="more-icon icon" width="16" height="16" icon="akar-icons:dot-grid-fill"
               @click="changeAccountShow"/>
       </div>
+    </div>
+
+    <div class="filter-bar" v-if="$slots.filters">
+      <slot name="filters"></slot>
     </div>
 
     <div ref="scroll" class="scroll">
@@ -38,9 +47,16 @@
                         :key="keyCount"
         >
           <template #default="{ data: item, index }" >
-            <div :class="'email-row ' + props.type"
+            <div :class="['email-row', props.type, {'row-cursor': item.emailId === cursorId}]"
                  :data-checked="item.checked"
-                 @click="jumpDetails(item)"
+                 tabindex="0"
+                 role="row"
+                 :aria-label="(item.name || '') + ', ' + (item.subject || '')"
+                 @click="cursorId = item.emailId; jumpDetails(item)"
+                 @keydown.enter.self="jumpDetails(item)"
+                 @touchstart.passive="swipeStart($event, item)"
+                 @touchmove.passive="swipeMove($event)"
+                 @touchend="swipeEnd($event, item)"
                  v-if="!item.expand"
                  :key="item.emailId"
                  @contextmenu="handleContextmenu($event, item)"
@@ -67,10 +83,10 @@
                     </div>
                   </div>
                   <div v-else></div>
-                  <span class="name">
+                  <span class="name" :title="rowAddress(item)">
                     <span>
                       <div class="unread" v-if="isMobile && (item.unread === EmailUnreadEnum.UNREAD && showUnread) "/>
-                      <slot name="name" :email="item"> {{ item.name }}</slot>
+                      <slot name="name" :email="item"> {{ props.type === 'send' ? (item.toName || item.toEmail || item.name) : item.name }}</slot>
                     </span>
                     <span>
                       <Icon v-if="item.isStar" icon="fluent-color:star-16" width="18" height="18"/>
@@ -82,6 +98,8 @@
                   <div class="email-text">
                     <span class="email-subject" :style="(item.unread === EmailUnreadEnum.UNREAD && showUnread)  ? 'font-weight: bold' : ''">
                       <div class="unread" v-if="!isMobile && (item.unread === EmailUnreadEnum.UNREAD && showUnread) "/>
+                      <Icon v-if="hasAtt(item)" class="att-icon" icon="mdi:paperclip" width="16" height="16"
+                            :title="$t('hasAttachment')" :aria-label="$t('hasAttachment')"/>
                       <span v-if="item.code" class="code-tag" @click.stop="copyCode(item.code)">[{{ t('codeLabel') }}{{ item.code }}]</span>
                       <span class="subject-text">
                         <slot name="subject" :email="item" >
@@ -108,7 +126,15 @@
                 </div>
               </div>
               <div class="email-right" :style="showUserInfo ? 'align-self: start;':''">
-                <span class="email-time" :style="(item.unread === EmailUnreadEnum.UNREAD && showUnread) ? 'font-weight: bold' : ''">{{ item.formatCreateTime }}</span>
+                <div class="row-actions" v-if="props.type !== 'draft' && props.type !== 'all-email'" @click.stop>
+                  <Icon v-if="showUnread && item.unread === EmailUnreadEnum.UNREAD" class="row-action" icon="fluent:mail-read-20-regular" width="19" height="19"
+                        role="button" tabindex="0" :title="$t('markReadTip')" :aria-label="$t('markReadTip')"
+                        @keydown.enter="emailRead(item.emailId)" @click="emailRead(item.emailId)"/>
+                  <Icon v-perm="'email:delete'" class="row-action" icon="uiw:delete" width="15" height="15"
+                        role="button" tabindex="0" :title="$t('delete')" :aria-label="$t('delete')"
+                        @keydown.enter="removeWithUndo([item.emailId])" @click="removeWithUndo([item.emailId])"/>
+                </div>
+                <span class="email-time" :title="item.createTime ? formatDetailDate(item.createTime) : null" :style="(item.unread === EmailUnreadEnum.UNREAD && showUnread) ? 'font-weight: bold' : ''">{{ item.formatCreateTime }}</span>
               </div>
             </div>
             <skeletonBlock v-else-if="item.expand === 'loading'"
@@ -138,7 +164,9 @@
                        :showUserInfo="showUserInfo"
                        :type="type"/>
       <div class="empty" v-if="noLoading && emailList.length === 0 && !loading">
-        <el-empty :image-size="isMobile ? 120 : null" :description="$t('noMessagesFound')"/>
+        <slot name="empty">
+          <el-empty :image-size="isMobile ? 120 : null" :description="$t('noMessagesFound')"/>
+        </slot>
       </div>
     </div>
     <el-dropdown
@@ -236,12 +264,14 @@
 <script setup>
 import {Icon} from "@iconify/vue";
 import skeletonBlock from "@/components/email-scroll/skeleton/index.vue"
-import {computed, onActivated, reactive, ref, watch, nextTick, onMounted, onUnmounted } from "vue";
+import {computed, h, onActivated, reactive, ref, watch, nextTick, onMounted, onUnmounted } from "vue";
 import {useEmailStore} from "@/store/email.js";
 import {useUiStore} from "@/store/ui.js";
 import {useSettingStore} from "@/store/setting.js";
 import {sleep} from "@/utils/time-utils.js"
-import {fromNow} from "@/utils/day.js";
+import {fromNow, formatDetailDate} from "@/utils/day.js";
+import {useListShortcuts} from "@/composables/useListShortcuts.js";
+import {emailRestore} from "@/request/email.js";
 import {useI18n} from "vue-i18n";
 import {EmailUnreadEnum} from "@/enums/email-enum.js";
 import { useClipboard } from '@/composables/useClipboard.js'
@@ -338,6 +368,19 @@ const position = ref(
 const triggerRef = ref({
   getBoundingClientRect() {
     return position.value;
+  }
+})
+
+const {cursorId} = useListShortcuts({
+  getList: () => emailList,
+  onMove: (index) => scrollbarRef.value?.scrollTo(index),
+  handlers: {
+    open: (email) => jumpDetails(email),
+    select: (email) => email.checked = !email.checked,
+    star: (email) => props.showStar && starChange(email),
+    read: (email) => props.showUnread && email.unread === EmailUnreadEnum.UNREAD && emailRead(email.emailId),
+    reply: (email) => ['email', 'star'].includes(props.type) && openReply(email),
+    remove: (email) => props.type !== 'draft' && props.type !== 'all-email' && removeWithUndo([email.emailId]),
   }
 })
 
@@ -638,6 +681,80 @@ function localRead(emailIds) {
   })
 }
 
+// Sent mail lists the recipient, everything else the sender
+function rowAddress(item) {
+  const sent = props.type === 'send'
+  const name = sent ? item.toName : item.name
+  const address = sent ? item.toEmail : item.sendEmail
+  if (!address) return null
+  return name && name !== address ? `${name} <${address}>` : address
+}
+
+function hasAtt(email) {
+  return Array.isArray(email.attList) && email.attList.some(att => att.type !== 1)
+}
+
+// Delete is a soft delete on the server, so it can be undone right after
+function removeWithUndo(emailIds) {
+  return props.emailDelete(emailIds).then(() => {
+    emailStore.deleteIds = emailIds
+    const msg = ElMessage({
+      type: 'success',
+      plain: true,
+      duration: 6000,
+      showClose: true,
+      message: h('span', [
+        emailIds.length > 1 ? t('emailsDeleted', {n: emailIds.length}) : t('emailDeleted'),
+        h('a', {
+          style: 'margin-left: 12px; cursor: pointer; font-weight: 600; color: var(--el-color-primary)',
+          role: 'button',
+          onClick: () => {
+            msg.close()
+            emailRestore(emailIds).then(() => {
+              ElMessage({message: t('emailRestored'), type: 'success', plain: true})
+              emailStore.emailScroll?.refreshList?.()
+              emailStore.sendScroll?.refreshList?.()
+              emailStore.starScroll?.refreshList?.()
+            })
+          }
+        }, t('undo'))
+      ])
+    })
+  })
+}
+
+// Swipe left on touch screens to delete
+let swipe = null
+
+function swipeStart(e, item) {
+  if (props.type === 'draft' || props.type === 'all-email' || e.touches.length !== 1) return
+  swipe = {x: e.touches[0].clientX, y: e.touches[0].clientY, dx: 0, locked: false}
+}
+
+function swipeMove(e) {
+  if (!swipe) return
+  const dx = e.touches[0].clientX - swipe.x
+  const dy = e.touches[0].clientY - swipe.y
+  if (!swipe.locked && Math.abs(dy) > Math.abs(dx)) {
+    swipe = null
+    return
+  }
+  swipe.locked = true
+  swipe.dx = dx
+  e.currentTarget.style.transform = dx < 0 ? `translateX(${Math.max(dx, -120)}px)` : ''
+}
+
+function swipeEnd(e, item) {
+  const target = e.currentTarget
+  const done = swipe && swipe.dx < -90
+  if (target) target.style.transform = ''
+  swipe = null
+  if (done) {
+    e.preventDefault()
+    removeWithUndo([item.emailId])
+  }
+}
+
 function rightDelete(emailId) {
 
   if (props.type === 'all-email') {
@@ -657,14 +774,7 @@ function rightDelete(emailId) {
     })
     return;
   }
-  props.emailDelete([emailId]).then(() => {
-    ElMessage({
-      message: t('delSuccessMsg'),
-      type: 'success',
-      plain: true
-    })
-    emailStore.deleteIds = [emailId];
-  })
+  removeWithUndo([emailId])
 }
 
 function handleSearch(type, value) {
@@ -689,14 +799,14 @@ function handleDelete() {
     }
 
     const emailIds = getSelectedMailsIds();
-    props.emailDelete(emailIds).then(() => {
-      ElMessage({
-        message: t('delSuccessMsg'),
-        type: 'success',
-        plain: true
+    if (props.type === 'all-email') {
+      props.emailDelete(emailIds).then(() => {
+        ElMessage({message: t('delSuccessMsg'), type: 'success', plain: true})
+        emailStore.deleteIds = emailIds;
       })
-      emailStore.deleteIds = emailIds;
-    })
+      return
+    }
+    removeWithUndo(emailIds)
   })
 }
 
@@ -907,11 +1017,19 @@ function loadData() {
 .email-container {
   display: grid;
   grid-template-rows: auto 1fr;
+  &.has-filters {
+    grid-template-rows: auto auto 1fr;
+  }
   padding: 0;
   font-size: 14px;
   color: var(--el-text-color-primary);
   overflow: hidden;
   height: 100%;
+}
+
+.filter-bar {
+  padding: 8px 15px;
+  box-shadow: var(--header-actions-border);
 }
 
 .scroll {
@@ -1232,6 +1350,46 @@ function loadData() {
   }*/
 }
 
+
+.row-actions {
+  display: none;
+  position: absolute;
+  right: 2px;
+  top: 2px;
+  bottom: 2px;
+  align-items: center;
+  gap: 14px;
+  padding: 0 16px 0 24px;
+  background: var(--email-hover-background);
+  color: var(--el-text-color-regular);
+  .row-action {
+    cursor: pointer;
+    &:hover, &:focus-visible {
+      color: var(--el-color-primary);
+    }
+  }
+}
+
+:deep(.email-row) {
+  &:hover, &:focus-within {
+    .row-actions {
+      display: flex;
+    }
+  }
+  &:focus-visible, &.row-cursor {
+    outline: 2px solid var(--el-color-primary);
+    outline-offset: -2px;
+  }
+  .att-icon {
+    flex: 0 0 auto;
+    color: var(--el-text-color-secondary);
+  }
+  @media (min-width: 1367px) {
+    .email-text {
+      grid-template-columns: minmax(120px, 40%) 1fr;
+    }
+  }
+}
 
 .phone-star {
   display: none;

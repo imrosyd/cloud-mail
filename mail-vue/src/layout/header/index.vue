@@ -10,13 +10,13 @@
       </div>
     </div>
     <div class="toolbar">
-      <div v-if="uiStore.dark" class="sun-icon icon-item" @click="openDark($event)">
+      <div v-if="uiStore.dark" class="sun-icon icon-item" role="button" tabindex="0" :title="$t('lightMode')" :aria-label="$t('lightMode')" @keydown.enter="openDark($event)" @click="openDark($event)">
         <Icon icon="mingcute:sun-fill"/>
       </div>
-      <div v-else class="dark-icon icon-item" @click="openDark($event)">
+      <div v-else class="dark-icon icon-item" role="button" tabindex="0" :title="$t('darkMode')" :aria-label="$t('darkMode')" @keydown.enter="openDark($event)" @click="openDark($event)">
         <Icon icon="solar:moon-linear"/>
       </div>
-      <div class="notice icon-item" @click="openNotice">
+      <div class="notice icon-item" role="button" tabindex="0" :title="$t('announcement')" :aria-label="$t('announcement')" @keydown.enter="openNotice" @click="openNotice">
         <Icon icon="streamline-plump:announcement-megaphone"/>
       </div>
       <el-dropdown ref="userinfoRef" @visible-change="e => userInfoShow = e" :teleported="false" popper-class="detail-dropdown">
@@ -112,7 +112,7 @@ const sendType = computed(() => {
   }
 
   if (userStore.user.role.sendType === 'ban') {
-    return t('sendBanned')
+    return t('sendBlocked')
   }
 
   if (userStore.user.role.sendType === 'internal') {

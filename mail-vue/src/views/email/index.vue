@@ -12,10 +12,20 @@
                actionLeft="4px"
                @jump="jumpContent"
   >
+    <template #filters>
+      <emailFilters ref="filters" show-unread @change="applyFilters"/>
+    </template>
+    <template #empty v-if="filtered">
+      <el-empty :description="$t('noResults')">
+        <el-button @click="filters.reset()">{{ $t('clearFilters') }}</el-button>
+      </el-empty>
+    </template>
     <template #first>
-      <Icon class="icon" @click="changeTimeSort" icon="material-symbols-light:timer-arrow-down-outline"
+      <Icon class="icon" @click="changeTimeSort" @keydown.enter="changeTimeSort" role="button" tabindex="0"
+            :title="$t('sortTip')" :aria-label="$t('sortTip')" icon="material-symbols-light:timer-arrow-down-outline"
             v-if="params.timeSort === 0" width="28" height="28"/>
-      <Icon class="icon" @click="changeTimeSort" icon="material-symbols-light:timer-arrow-up-outline" v-else
+      <Icon class="icon" @click="changeTimeSort" @keydown.enter="changeTimeSort" role="button" tabindex="0"
+            :title="$t('sortTip')" :aria-label="$t('sortTip')" icon="material-symbols-light:timer-arrow-up-outline" v-else
             width="28" height="28"/>
     </template>
 
@@ -27,9 +37,10 @@ import {useAccountStore} from "@/store/account.js";
 import {useEmailStore} from "@/store/email.js";
 import {useNotifyStore} from "@/store/notify.js";
 import emailScroll from "@/components/email-scroll/index.vue"
+import emailFilters from "@/components/email-filters/index.vue"
 import {emailList, emailDelete, emailRead} from "@/request/email.js";
 import {starAdd, starCancel} from "@/request/star.js";
-import {defineOptions, h, onMounted, reactive, ref, watch} from "vue";
+import {computed, defineOptions, h, onMounted, reactive, ref, watch} from "vue";
 import router from "@/router/index.js";
 import {Icon} from "@iconify/vue";
 
@@ -41,9 +52,20 @@ const emailStore = useEmailStore();
 const accountStore = useAccountStore();
 const notifyStore = useNotifyStore();
 const scroll = ref({})
+const filters = ref({})
 const params = reactive({
   timeSort: 0,
+  keyword: '',
+  view: 'all',
 })
+
+const filtered = computed(() => !!params.keyword || params.view !== 'all')
+
+function applyFilters({keyword, view}) {
+  params.keyword = keyword
+  params.view = view
+  scroll.value.refreshList()
+}
 
 onMounted(() => {
   emailStore.emailScroll = scroll;
@@ -53,7 +75,7 @@ onMounted(() => {
 // New mail found by the global notifier goes straight into the list,
 // so the list updates together with the badge and the toast
 watch(() => notifyStore.incomingTick, () => {
-  if (scroll.value.firstLoad) return
+  if (scroll.value.firstLoad || params.keyword || params.view === 'starred') return
   const accountId = accountStore.currentAccountId
   const allReceive = accountStore.currentAccount.allReceive
   const list = [...notifyStore.incoming].sort((a, b) => a.emailId - b.emailId)
@@ -96,7 +118,11 @@ function cancelStar(email) {
 function getEmailList(emailId, size) {
   const accountId =  accountStore.currentAccountId;
   const allReceive = accountStore.currentAccount.allReceive;
-  return emailList(accountId, allReceive, emailId, params.timeSort, size, 0).then(data => {
+  return emailList(accountId, allReceive, emailId, params.timeSort, size, 0, {
+    keyword: params.keyword,
+    unread: params.view === 'unread',
+    starred: params.view === 'starred'
+  }).then(data => {
     data.latestEmail.reqAccountId = accountId;
     data.latestEmail.allReceive = allReceive;
     return data;
@@ -108,4 +134,5 @@ function getEmailList(emailId, size) {
 .icon {
   cursor: pointer;
 }
+
 </style>

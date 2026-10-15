@@ -24,6 +24,11 @@ app.delete('/email/delete', async (c) => {
 	return c.json(result.ok());
 });
 
+app.put('/email/restore', async (c) => {
+	await emailService.restore(c, await c.req.json(), userContext.getUserId(c));
+	return c.json(result.ok());
+});
+
 app.get('/email/attList', async (c) => {
 	const attList = await attService.list(c, c.req.query(), userContext.getUserId(c));
 	return c.json(result.ok(attList));

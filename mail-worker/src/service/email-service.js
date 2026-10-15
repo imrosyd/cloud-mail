@@ -27,7 +27,7 @@ const emailService = {
 
 	async list(c, params, userId) {
 
-		let { emailId, type, accountId, size, timeSort, allReceive } = params;
+		let { emailId, type, accountId, size, timeSort, allReceive, keyword, unread, starred } = params;
 
 		size = Number(size);
 		emailId = Number(emailId);
@@ -54,6 +54,26 @@ const emailService = {
 			allReceive = accountRow.allReceive;
 		}
 
+		const filters = [];
+		keyword = typeof keyword === 'string' ? keyword.trim().slice(0, 100) : '';
+		if (keyword) {
+			const pattern = `%${keyword.replace(/[\\%_]/g, m => '\\' + m)}%`;
+			filters.push(or(
+				sql`${email.subject} like ${pattern} escape '\\'`,
+				sql`${email.name} like ${pattern} escape '\\'`,
+				sql`${email.sendEmail} like ${pattern} escape '\\'`,
+				sql`${email.toEmail} like ${pattern} escape '\\'`,
+				sql`${email.toName} like ${pattern} escape '\\'`,
+				sql`${email.text} like ${pattern} escape '\\'`
+			));
+		}
+		if (unread === '1') {
+			filters.push(eq(email.unread, 0));
+		}
+		if (starred === '1') {
+			filters.push(sql`${star.starId} is not null`);
+		}
+
 		const query = orm(c)
 			.select({
 				...email,
@@ -77,7 +97,8 @@ const emailService = {
 					timeSort ? gt(email.emailId, emailId) : lt(email.emailId, emailId),
 					eq(email.type, type),
 					eq(email.isDel, isDel.NORMAL),
-					eq(account.isDel, isDel.NORMAL)
+					eq(account.isDel, isDel.NORMAL),
+					...filters
 				)
 			);
 
@@ -91,6 +112,12 @@ const emailService = {
 
 		const totalQuery = orm(c).select({ total: count() }).from(email)
 			.leftJoin(
+				star,
+				and(
+					eq(star.emailId, email.emailId),
+					eq(star.userId, userId)
+				)
+			).leftJoin(
 				account,
 				eq(account.accountId, email.accountId)
 			)
@@ -100,7 +127,8 @@ const emailService = {
 					eq(email.userId, userId),
 					eq(email.type, type),
 					eq(email.isDel, isDel.NORMAL),
-					eq(account.isDel, isDel.NORMAL)
+					eq(account.isDel, isDel.NORMAL),
+					...filters
 				)
 		).get();
 
@@ -138,6 +166,17 @@ const emailService = {
 		const { emailIds } = params;
 		const emailIdList = emailIds.split(',').map(Number);
 		await orm(c).update(email).set({ isDel: isDel.DELETE }).where(
+			and(
+				eq(email.userId, userId),
+				inArray(email.emailId, emailIdList)))
+			.run();
+	},
+
+	async restore(c, params, userId) {
+		const { emailIds } = params;
+		const emailIdList = String(emailIds).split(',').map(Number).filter(Number.isInteger);
+		if (emailIdList.length === 0) return;
+		await orm(c).update(email).set({ isDel: isDel.NORMAL }).where(
 			and(
 				eq(email.userId, userId),
 				inArray(email.emailId, emailIdList)))
