@@ -102,7 +102,8 @@ function initEditor() {
     }`,
     plugins: 'link image advlist lists  emoticons fullscreen  table preview code',
     toolbar: 'bold emoticons forecolor backcolor italic fontsize | alignleft aligncenter alignright alignjustify | outdent indent |  bullist numlist | link image  | table code preview fullscreen',
-    toolbar_mode: 'scrolling',
+    // Phones wrap the tools onto rows so none are hidden off screen
+    toolbar_mode: window.innerWidth < 768 ? 'wrap' : 'scrolling',
     font_size_formats: '8px 10px 12px 14px 16px 18px 24px 36px',
     emoticons_search: false,
     language: language.value,
