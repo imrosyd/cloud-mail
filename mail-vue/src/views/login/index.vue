@@ -280,12 +280,10 @@ function linuxDoLogin() {
 linuxDoGetUser();
 
 function showNoticeOnce() {
-  // Announcement opens automatically only when it changed since this device last saw it
-  const n = settingStore.settings
-  const stamp = [n.noticeTitle, n.noticeContent].join('|')
+  // Welcome announcement: only on the first sign in on this device
   try {
-    if (localStorage.getItem('noticeSeen') === stamp) return
-    localStorage.setItem('noticeSeen', stamp)
+    if (localStorage.getItem('noticeSeen')) return
+    localStorage.setItem('noticeSeen', '1')
   } catch (e) {}
   uiStore.showNotice()
 }
