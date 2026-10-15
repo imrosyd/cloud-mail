@@ -145,6 +145,7 @@ const en = {
     accCopy: 'Copy address',
     accSettings: 'Account settings',
     accDomains: 'Domains',
+    back: 'Back',
     emailCount: 'Total {total}',
     error404: '404 Not Found',
     home: 'Home',

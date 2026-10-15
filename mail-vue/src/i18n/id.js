@@ -145,6 +145,7 @@ const id = {
     accCopy: 'Salin alamat',
     accSettings: 'Pengaturan akun',
     accDomains: 'Domain',
+    back: 'Kembali',
     emailCount: 'Total {total}',
     error404: '404 Tidak Ditemukan',
     home: 'Beranda',

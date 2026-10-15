@@ -7,6 +7,8 @@ import {onActivated, onDeactivated, onMounted, onUnmounted, ref} from "vue";
  */
 export function useListShortcuts({getList, onMove, handlers}) {
     const cursorId = ref(0)
+    // The cursor outline is for keyboard use only, a mouse click must not leave it behind
+    const kbd = ref(false)
     let active = true
 
     function typing(e) {
@@ -26,6 +28,7 @@ export function useListShortcuts({getList, onMove, handlers}) {
         const at = list.findIndex(item => item.emailId === cursorId.value)
         const next = Math.min(list.length - 1, Math.max(0, at === -1 ? (step > 0 ? 0 : list.length - 1) : at + step))
         cursorId.value = list[next].emailId
+        kbd.value = true
         onMove?.(next)
     }
 
@@ -50,10 +53,20 @@ export function useListShortcuts({getList, onMove, handlers}) {
         }
     }
 
-    onMounted(() => window.addEventListener('keydown', onKeydown))
-    onUnmounted(() => window.removeEventListener('keydown', onKeydown))
+    function onPointer() {
+        kbd.value = false
+    }
+
+    onMounted(() => {
+        window.addEventListener('keydown', onKeydown)
+        window.addEventListener('pointerdown', onPointer, true)
+    })
+    onUnmounted(() => {
+        window.removeEventListener('keydown', onKeydown)
+        window.removeEventListener('pointerdown', onPointer, true)
+    })
     onActivated(() => active = true)
     onDeactivated(() => active = false)
 
-    return {cursorId}
+    return {cursorId, kbd}
 }

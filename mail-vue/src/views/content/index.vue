@@ -1,14 +1,16 @@
 <template>
   <div class="box">
     <div class="header-actions">
-      <Icon class="icon" icon="material-symbols-light:arrow-back-ios-new" width="20" height="20" @click="handleBack"/>
-      <Icon v-perm="'email:delete'" class="icon" icon="uiw:delete" width="16" height="16" @click="handleDelete"/>
+      <Icon class="icon" icon="material-symbols-light:arrow-back-ios-new" width="20" height="20" role="button" tabindex="0"
+            :title="$t('back')" :aria-label="$t('back')" @keydown.enter="handleBack" @click="handleBack"/>
+      <Icon v-perm="'email:delete'" class="icon" icon="uiw:delete" width="16" height="16" role="button" tabindex="0"
+            :title="$t('delete')" :aria-label="$t('delete')" @keydown.enter="handleDelete" @click="handleDelete"/>
       <span class="star" v-if="emailStore.contentData.showStar">
-        <Icon class="icon" @click="changeStar" v-if="email.isStar" icon="fluent-color:star-16" width="20" height="20"/>
-        <Icon class="icon" @click="changeStar" v-else icon="solar:star-line-duotone" width="18" height="18"/>
+        <Icon class="icon" @click="changeStar" @keydown.enter="changeStar" role="button" tabindex="0" :title="$t('star')" :aria-label="$t('star')" v-if="email.isStar" icon="fluent-color:star-16" width="20" height="20"/>
+        <Icon class="icon" @click="changeStar" @keydown.enter="changeStar" role="button" tabindex="0" :title="$t('star')" :aria-label="$t('star')" v-else icon="solar:star-line-duotone" width="18" height="18"/>
       </span>
-      <Icon class="icon" v-if="emailStore.contentData.showReply" v-perm="'email:send'"  @click="openReply" icon="la:reply" width="21" height="21" />
-      <Icon class="icon" v-if="emailStore.contentData.showReply" v-perm="'email:send'"  @click="openForward" icon="iconoir:arrow-up-right" width="20" height="20" />
+      <Icon class="icon" v-if="emailStore.contentData.showReply" v-perm="'email:send'" role="button" tabindex="0" :title="$t('reply')" :aria-label="$t('reply')" @keydown.enter="openReply" @click="openReply" icon="la:reply" width="21" height="21" />
+      <Icon class="icon" v-if="emailStore.contentData.showReply" v-perm="'email:send'" role="button" tabindex="0" :title="$t('forward')" :aria-label="$t('forward')" @keydown.enter="openForward" @click="openForward" icon="iconoir:arrow-up-right" width="20" height="20" />
     </div>
     <div></div>
     <el-scrollbar class="scrollbar">

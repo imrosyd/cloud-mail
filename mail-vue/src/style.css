@@ -210,3 +210,18 @@ html[data-theme-to="light"]::view-transition-old(root) {
     from { clip-path: circle(var(--vt-end-radius, 0px) at var(--vt-x) var(--vt-y)); }
     to   { clip-path: circle(0px at var(--vt-x) var(--vt-y)); }
 }
+
+
+/* Table action buttons: quiet until hovered, like the settings buttons */
+.el-table .el-button--primary:not(.is-link):not(.is-disabled) {
+    background: var(--el-color-primary-light-9);
+    border-color: transparent;
+    color: var(--el-color-primary);
+    transition: background-color .15s, color .15s;
+}
+
+.el-table .el-button--primary:not(.is-link):not(.is-disabled):hover,
+.el-table .el-button--primary:not(.is-link):not(.is-disabled):focus-visible {
+    background: var(--el-color-primary);
+    color: #fff;
+}

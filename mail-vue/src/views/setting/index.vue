@@ -63,7 +63,7 @@
         {{$t('delAccountMsg')}}
       </div>
       <div>
-        <el-button type="primary" @click="deleteConfirm">{{$t('deleteUserBtn')}}</el-button>
+        <el-button type="danger" @click="deleteConfirm">{{$t('deleteUserBtn')}}</el-button>
       </div>
     </div>
     <el-dialog v-model="pwdShow" :title="$t('changePassword')" width="340">
@@ -240,6 +240,8 @@ function submitPwd() {
 </script>
 <style scoped lang="scss">
 .box {
+  max-width: 760px;
+  margin: 0 auto;
   padding: 40px 40px;
 
   @media (max-width: 767px) {

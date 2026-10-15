@@ -145,6 +145,7 @@ const zh = {
     accCopy: '复制地址',
     accSettings: '账号设置',
     accDomains: '域名',
+    back: '返回',
     emailCount: '共 {total} 封',
     error404: '404错误, 找不到页面',
     home: '返回首页',

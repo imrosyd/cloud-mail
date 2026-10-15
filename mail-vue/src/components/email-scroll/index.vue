@@ -47,7 +47,7 @@
                         :key="keyCount"
         >
           <template #default="{ data: item, index }" >
-            <div :class="['email-row', props.type, {'row-cursor': item.emailId === cursorId}]"
+            <div :class="['email-row', props.type, {'row-cursor': kbd && item.emailId === cursorId}]"
                  :data-checked="item.checked"
                  tabindex="0"
                  role="row"
@@ -371,7 +371,7 @@ const triggerRef = ref({
   }
 })
 
-const {cursorId} = useListShortcuts({
+const {cursorId, kbd} = useListShortcuts({
   getList: () => emailList,
   onMove: (index) => scrollbarRef.value?.scrollTo(index),
   handlers: {
@@ -580,9 +580,9 @@ function updateHasScrollbar() {
     const doc = document.querySelector('.virtual');
     if (doc) {
       if (doc.scrollHeight > doc.clientHeight) {
-        timePaddingRight.value = '5px';
+        timePaddingRight.value = '12px';
       } else {
-        timePaddingRight.value = '15px'
+        timePaddingRight.value = '20px'
       }
     }
   })

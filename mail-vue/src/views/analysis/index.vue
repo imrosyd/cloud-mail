@@ -758,10 +758,10 @@ function createSendGauge() {
   }
 
   .title {
-    margin-top: 10px;
-    margin-left: 15px;
-    font-size: 18px;
-    font-weight: 500;
+    margin-top: 16px;
+    margin-left: 20px;
+    font-size: 16px;
+    font-weight: 600;
   }
 
   .number {
@@ -773,14 +773,33 @@ function createSendGauge() {
       gap: 15px;
     }
     @media (max-width: 767px) {
-      grid-template-columns: 1fr;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
     }
 
     .number-item {
+      --tone: var(--el-color-primary);
+      --tone-bg: var(--el-color-primary-light-9);
       background: var(--el-bg-color);
-      border-radius: 8px;
-      border: 1px solid var(--el-border-color);
-      padding: 21px 20px;
+      border-radius: 10px;
+      border: 1px solid var(--el-border-color-lighter);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, .04);
+      padding: 20px;
+
+      &:nth-child(2) {
+        --tone: var(--el-color-success);
+        --tone-bg: var(--el-color-success-light-9);
+      }
+
+      &:nth-child(3) {
+        --tone: var(--el-color-warning);
+        --tone-bg: var(--el-color-warning-light-9);
+      }
+
+      &:nth-child(4) {
+        --tone: #8b5cf6;
+        --tone-bg: rgba(139, 92, 246, .1);
+      }
 
       .top {
         display: grid;
@@ -794,7 +813,8 @@ function createSendGauge() {
           grid-auto-rows: min-content;
 
           > div:first-child {
-            font-size: 15px;
+            font-size: 14px;
+            color: var(--el-text-color-secondary);
           }
 
           > div:last-child {
@@ -802,7 +822,9 @@ function createSendGauge() {
           }
 
           :deep(.el-statistic__number) {
-            font-size: 26px;
+            font-size: 32px;
+            font-weight: 600;
+            line-height: 1.2;
           }
         }
 
@@ -816,9 +838,9 @@ function createSendGauge() {
             display: grid;
             align-items: center;
             padding: 14px;
-            border-radius: 8px;
-            background: var(--el-color-primary-light-9);
-            color: var(--el-color-primary);
+            border-radius: 10px;
+            background: var(--tone-bg);
+            color: var(--tone);
           }
         }
 
@@ -829,21 +851,28 @@ function createSendGauge() {
         display: grid;
         grid-template-columns:  auto auto;
         justify-content: start;
-        gap: 20px;
-        padding-top: 5px;
-        font-size: 14px;
+        gap: 8px;
+        padding-top: 12px;
+        font-size: 13px;
+
+        > div {
+          padding: 2px 10px;
+          border-radius: 999px;
+          background: var(--el-fill-color-light);
+          color: var(--el-text-color-secondary);
+        }
 
         .normal {
           width: fit-content;
           color: var(--el-color-success);
-          font-weight: bold;;
+          font-weight: 600;
           margin-left: 3px;
         }
 
         .deleted {
           width: fit-content;
           color: var(--el-color-danger);
-          font-weight: bold;;
+          font-weight: 600;
           margin-left: 3px;
         }
       }
@@ -853,9 +882,9 @@ function createSendGauge() {
 
   .picture {
     display: grid;
-    grid-template-columns: 500px 1fr;
+    grid-template-columns: minmax(380px, 5fr) 7fr;
     gap: 20px;
-    @media (max-width: 1620px) {
+    @media (max-width: 1100px) {
       grid-template-columns: 1fr;
     }
     @media (max-width: 1024px) {
@@ -864,8 +893,9 @@ function createSendGauge() {
 
     .picture-item {
       background: var(--el-bg-color);
-      border-radius: 8px;
-      border: 1px solid var(--el-border-color);
+      border-radius: 10px;
+      border: 1px solid var(--el-border-color-lighter);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, .04);
 
       .source-button {
         padding-right: 15px;
@@ -895,17 +925,18 @@ function createSendGauge() {
 
   .picture-cs {
     display: grid;
-    grid-template-columns: 1fr 500px;
+    grid-template-columns: 7fr minmax(380px, 5fr);
     gap: 20px;
-    @media (max-width: 1620px) {
+    @media (max-width: 1100px) {
       grid-template-columns: 1fr;
       gap: 15px;
     }
 
     .picture-cs-item {
       background: var(--el-bg-color);
-      border-radius: 8px;
-      border: 1px solid var(--el-border-color);
+      border-radius: 10px;
+      border: 1px solid var(--el-border-color-lighter);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, .04);
 
       .send-count {
         height: 350px;
@@ -924,24 +955,26 @@ function createSendGauge() {
   }
 }
 
+// Phones: two stat cards per row, icon hidden to give the numbers room
+@media (max-width: 767px) {
+  .analysis .number .number-item {
+    padding: 14px;
+
+    .top .right {
+      display: none;
+    }
+
+    .delete-ratio {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+
+      > div {
+        white-space: nowrap;
+        padding: 2px 8px;
+        font-size: 12px;
+      }
+    }
+  }
+}
 </style>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

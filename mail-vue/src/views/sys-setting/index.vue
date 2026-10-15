@@ -1582,6 +1582,7 @@ function editSetting(settingForm, refreshStatus = true) {
 
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(440px, 1fr));
+  align-items: start;
   padding: 20px;
   gap: 20px;
   @media (max-width: 500px) {
@@ -1616,30 +1617,59 @@ function editSetting(settingForm, refreshStatus = true) {
 
 .settings-card {
   background-color: var(--el-bg-color);
-  border-radius: 8px;
-  border: 1px solid var(--el-border-color);
-  transition: all 300ms;
+  border-radius: 10px;
+  border: 1px solid var(--el-border-color-lighter);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .04);
+  transition: box-shadow 200ms;
   overflow: hidden;
+
+  &:hover {
+    box-shadow: 0 2px 10px rgba(0, 0, 0, .07);
+  }
 }
 
 
 .card-title {
   font-size: 15px;
-  font-weight: bold;
-  padding: 10px 20px;
-  border-bottom: 1px solid var(--el-border-color);
+  font-weight: 600;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--el-border-color-lighter);
 }
 
 .card-content {
-  padding: 20px;
+  padding: 4px 20px 8px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+
+  // Every row shares one height and a hairline divider
+  > * {
+    min-height: 48px;
+    padding: 6px 0;
+    box-sizing: border-box;
+  }
+
+  > * + * {
+    border-top: 1px solid var(--el-border-color-extra-light);
+  }
+
+  // Action buttons stay quiet until hovered, so the toggles and values lead
+  :deep(.el-button--primary:not(.is-link)) {
+    background: var(--el-color-primary-light-9);
+    border-color: transparent;
+    color: var(--el-color-primary);
+    transition: background-color .15s, color .15s;
+
+    &:hover, &:focus-visible {
+      background: var(--el-color-primary);
+      color: #fff;
+    }
+  }
 }
 
 .setting-item {
   display: grid;
   grid-template-columns: auto 1fr;
+  align-items: center;
   gap: 10px;
   font-weight: normal;
 
@@ -1659,6 +1689,7 @@ function editSetting(settingForm, refreshStatus = true) {
 
 .r2domain-item {
   display: flex;
+  align-items: center;
   gap: 10px;
   > div:first-child {
     display: flex;
@@ -1970,6 +2001,8 @@ function editSetting(settingForm, refreshStatus = true) {
 
   > span:first-child {
     font-weight: normal;
+    width: 110px;
+    flex-shrink: 0;
     padding-right: 20px;
     white-space: nowrap;
   }
