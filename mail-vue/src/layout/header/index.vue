@@ -16,9 +16,6 @@
       <div v-else class="dark-icon icon-item" role="button" tabindex="0" :title="$t('darkMode')" :aria-label="$t('darkMode')" @keydown.enter="openDark($event)" @click="openDark($event)">
         <Icon icon="solar:moon-linear"/>
       </div>
-      <div class="notice icon-item" role="button" tabindex="0" :title="$t('announcement')" :aria-label="$t('announcement')" @keydown.enter="openNotice" @click="openNotice">
-        <Icon icon="streamline-plump:announcement-megaphone"/>
-      </div>
       <el-dropdown ref="userinfoRef" @visible-change="e => userInfoShow = e" :teleported="false" popper-class="detail-dropdown">
         <div class="avatar" @click="userInfoHide" >
           <div class="avatar-text">
@@ -173,10 +170,6 @@ async function copyEmail(email) {
 function changeLang(lang) {
   setExtend(lang === 'en' ? 'en' : 'zh-cn')
   settingStore.lang = lang
-}
-
-function openNotice() {
-  uiStore.showNotice()
 }
 
 function openDark(e) {
@@ -419,11 +412,6 @@ function formatName(email) {
 
   .icon-item:hover {
     background: var(--base-fill);
-  }
-
-  .notice {
-    font-size: 22px;
-    margin-right: 4px;
   }
 
   .dark-icon {

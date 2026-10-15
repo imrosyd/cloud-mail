@@ -140,7 +140,6 @@ const zh = {
     sendBlocked: '不允许',
     lightMode: '浅色模式',
     darkMode: '深色模式',
-    announcement: '公告',
     allReceiveOn: '接收全部邮件（点击限制）',
     allReceiveOff: '仅自己的邮件（点击接收全部）',
     accCopy: '复制地址',

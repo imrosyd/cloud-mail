@@ -140,7 +140,6 @@ const id = {
     sendBlocked: 'Tidak diizinkan',
     lightMode: 'Mode terang',
     darkMode: 'Mode gelap',
-    announcement: 'Pengumuman',
     allReceiveOn: 'Menerima semua email (klik untuk membatasi)',
     allReceiveOff: 'Hanya email sendiri (klik untuk menerima semua)',
     accCopy: 'Salin alamat',

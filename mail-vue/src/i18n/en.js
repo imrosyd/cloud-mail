@@ -140,7 +140,6 @@ const en = {
     sendBlocked: 'Not allowed',
     lightMode: 'Light mode',
     darkMode: 'Dark mode',
-    announcement: 'Announcement',
     allReceiveOn: 'Receives all mail (click to limit)',
     allReceiveOff: 'Own mail only (click to receive all)',
     accCopy: 'Copy address',
