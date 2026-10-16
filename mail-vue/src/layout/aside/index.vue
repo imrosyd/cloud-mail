@@ -47,6 +47,7 @@ const allMain = [
   {name: 'send', label: 'sent', icon: 'lucide:send', perm: 'email:send'},
   {name: 'draft', label: 'drafts', icon: 'lucide:file-text', perm: 'email:send'},
   {name: 'star', label: 'starred', icon: 'lucide:star'},
+  {name: 'trash', label: 'trash', icon: 'lucide:trash-2', perm: 'email:delete'},
   {name: 'setting', label: 'settings', icon: 'lucide:settings'},
 ]
 

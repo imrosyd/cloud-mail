@@ -27,7 +27,10 @@ const emailService = {
 
 	async list(c, params, userId) {
 
-		let { emailId, type, accountId, size, timeSort, allReceive, keyword, unread, starred } = params;
+		let { emailId, type, accountId, size, timeSort, allReceive, keyword, unread, starred, trash } = params;
+		// The trash lists the user's own deleted mail of every kind, across all accounts
+		const inTrash = trash === '1';
+		const deletedState = inTrash ? isDel.DELETE : isDel.NORMAL;
 
 		size = Number(size);
 		emailId = Number(emailId);
@@ -95,8 +98,8 @@ const emailService = {
 					allReceive ? eq(1,1) : eq(email.accountId, accountId),
 					eq(email.userId, userId),
 					timeSort ? gt(email.emailId, emailId) : lt(email.emailId, emailId),
-					eq(email.type, type),
-					eq(email.isDel, isDel.NORMAL),
+					inTrash ? undefined : eq(email.type, type),
+					eq(email.isDel, deletedState),
 					eq(account.isDel, isDel.NORMAL),
 					...filters
 				)
@@ -125,8 +128,8 @@ const emailService = {
 				and(
 					allReceive ? eq(1,1) : eq(email.accountId, accountId),
 					eq(email.userId, userId),
-					eq(email.type, type),
-					eq(email.isDel, isDel.NORMAL),
+					inTrash ? undefined : eq(email.type, type),
+					eq(email.isDel, deletedState),
 					eq(account.isDel, isDel.NORMAL),
 					...filters
 				)
@@ -136,8 +139,8 @@ const emailService = {
 			and(
 				allReceive ? eq(1,1) : eq(email.accountId, accountId),
 				eq(email.userId, userId),
-				eq(email.type, type),
-				eq(email.isDel, isDel.NORMAL)
+				inTrash ? undefined : eq(email.type, type),
+				eq(email.isDel, deletedState)
 			))
 			.orderBy(desc(email.emailId)).limit(1).get();
 
@@ -170,6 +173,25 @@ const emailService = {
 				eq(email.userId, userId),
 				inArray(email.emailId, emailIdList)))
 			.run();
+	},
+
+	// Permanent removal, only for mail the user already deleted
+	async purge(c, params, userId) {
+		const emailIdList = String(params.emailIds || '').split(',').map(Number).filter(Number.isInteger);
+		if (emailIdList.length === 0) return;
+		const owned = await orm(c).select({ emailId: email.emailId }).from(email).where(
+			and(eq(email.userId, userId), eq(email.isDel, isDel.DELETE), inArray(email.emailId, emailIdList))).all();
+		await this.physicsDelete(c, { emailIds: owned.map(row => row.emailId).join(',') });
+	},
+
+	async emptyTrash(c, userId) {
+		const owned = await orm(c).select({ emailId: email.emailId }).from(email).where(
+			and(eq(email.userId, userId), eq(email.isDel, isDel.DELETE))).all();
+		// Chunked so one statement never carries too many bound parameters
+		for (let i = 0; i < owned.length; i += 50) {
+			await this.physicsDelete(c, { emailIds: owned.slice(i, i + 50).map(row => row.emailId).join(',') });
+		}
+		return owned.length;
 	},
 
 	async restore(c, params, userId) {
@@ -1058,6 +1080,12 @@ const emailService = {
 	async read(c, params, userId) {
 		const { emailIds } = params;
 		await orm(c).update(email).set({ unread: emailConst.unread.READ }).where(and(eq(email.userId, userId), inArray(email.emailId, emailIds)));
+	},
+
+	async markUnread(c, params, userId) {
+		const emailIds = (params.emailIds || []).map(Number).filter(Number.isInteger);
+		if (emailIds.length === 0) return;
+		await orm(c).update(email).set({ unread: emailConst.unread.UNREAD }).where(and(eq(email.userId, userId), inArray(email.emailId, emailIds)));
 	}
 };
 

@@ -94,6 +94,59 @@ await test('delete can be undone', async () => {
   expect(await qa.locator('.email-row').count() === before, 'row not restored')
 })
 
+await test('a deleted mail shows in the trash and can be restored', async () => {
+  const subject = '[e2e] Unread one'
+  const row = qa.locator('.email-row', {hasText: subject})
+  await row.first().hover()
+  await row.first().locator('.row-action[title="Delete"]').click()
+  await qa.waitForTimeout(900)
+  expect(await row.count() === 0, 'still in inbox')
+  await qa.locator('.el-menu-item:has-text("Trash")').click()
+  await qa.waitForTimeout(1500)
+  expect(await qa.locator('.email-row', {hasText: subject}).count() === 1, 'not in trash')
+  await qa.locator('.email-row', {hasText: subject}).first().hover()
+  await qa.locator('.email-row', {hasText: subject}).first().locator('.row-action[title="Restore"]').click()
+  await qa.waitForTimeout(1200)
+  expect(await qa.locator('.email-row', {hasText: subject}).count() === 0, 'still in trash after restore')
+  await qa.locator('.el-menu-item:has-text("Inbox")').click()
+  await qa.waitForTimeout(1500)
+  expect(await qa.locator('.email-row', {hasText: subject}).count() === 1, 'not back in inbox')
+})
+
+await test('deleting forever asks first and removes the mail for good', async () => {
+  const subject = '[e2e] Disposable mail'
+  const row = qa.locator('.email-row', {hasText: subject})
+  await row.first().hover()
+  await row.first().locator('.row-action[title="Delete"]').click()
+  await qa.waitForTimeout(800)
+  await qa.locator('.el-menu-item:has-text("Trash")').click()
+  await qa.waitForTimeout(1500)
+  const trashRow = qa.locator('.email-row', {hasText: subject}).first()
+  await trashRow.hover()
+  await trashRow.locator('.row-action[title="Delete forever"]').click()
+  await qa.waitForSelector('.el-message-box')
+  await qa.locator('.el-message-box__btns .el-button--primary').click()
+  await qa.waitForTimeout(1200)
+  expect(await qa.locator('.email-row', {hasText: subject}).count() === 0, 'still listed')
+  await qa.reload()
+  await qa.waitForTimeout(1800)
+  expect(await qa.locator('.email-row', {hasText: subject}).count() === 0, 'came back after reload')
+  await qa.locator('.el-menu-item:has-text("Inbox")').click()
+  await qa.waitForTimeout(1200)
+})
+
+await test('a read mail can be marked unread and shows up under Unread', async () => {
+  const row = qa.locator('.email-row', {hasText: 'Very long subject'}).first()
+  await row.hover()
+  await row.locator('.row-action[title="Mark as unread"]').click()
+  await qa.waitForTimeout(900)
+  await qa.click('.el-radio-button:has-text("Unread")')
+  await qa.waitForTimeout(1000)
+  expect(await qa.locator('.email-row', {hasText: 'Very long subject'}).count() === 1, 'not under Unread')
+  await qa.click('.el-radio-button:has-text("All")')
+  await qa.waitForTimeout(700)
+})
+
 await test('message pane shows a mail that has no body, only an attachment', async () => {
   await qa.locator('.layout-btn').nth(1).click()
   await qa.waitForTimeout(600)
@@ -123,6 +176,31 @@ await test('layout choice and divider size survive a reload', async () => {
   expect(Math.abs(Math.round((await qa.locator('.split-body .scroll').boundingBox()).width) - width) < 3, 'width lost')
 })
 
+await test('remote images are hidden when blocking is on and can be shown per mail', async () => {
+  await qa.locator('.el-menu-item:has-text("Settings")').first().click()
+  await qa.waitForTimeout(800)
+  await qa.locator('.notify:has-text("Block remote images") .el-switch').click()
+  await qa.locator('.el-menu-item:has-text("Inbox")').click()
+  await qa.waitForTimeout(1200)
+  await qa.locator('.email-row', {hasText: 'HTML newsletter'}).first().click()
+  await qa.waitForTimeout(1200)
+  expect(await qa.locator('.preview .img-banner').count() === 1, 'no banner')
+  const hidden = await qa.evaluate(() => {
+    const host = document.querySelector('.preview .mail-content .content-html')
+    const img = host && host.shadowRoot && host.shadowRoot.querySelector('img')
+    return img ? img.hasAttribute('src') : null
+  })
+  expect(hidden === false, 'image still has a src')
+  await qa.click('.preview .img-banner button')
+  await qa.waitForTimeout(600)
+  expect(await qa.locator('.preview .img-banner').count() === 0, 'banner stayed')
+  await qa.locator('.el-menu-item:has-text("Settings")').first().click()
+  await qa.waitForTimeout(600)
+  await qa.locator('.notify:has-text("Block remote images") .el-switch').click()
+  await qa.locator('.el-menu-item:has-text("Inbox")').click()
+  await qa.waitForTimeout(800)
+})
+
 await test('opening a mail in the full page works for a mail with a null text part', async () => {
   await qa.locator('.layout-btn').nth(0).click()
   await qa.waitForTimeout(500)
@@ -130,6 +208,17 @@ await test('opening a mail in the full page works for a mail with a null text pa
   await qa.waitForSelector('.email-title', {timeout: 8000})
   expect(await qa.locator('.att').count() === 1, 'attachment missing on full page')
   await qa.goBack()
+})
+
+await test('the question mark key opens the shortcut list', async () => {
+  await qa.locator('.el-menu-item:has-text("Inbox")').click()
+  await qa.waitForTimeout(800)
+  await qa.mouse.click(900, 78)
+  await qa.keyboard.press('Shift+Slash')
+  await qa.waitForSelector('.shortcut-list', {timeout: 4000})
+  expect(await qa.locator('.shortcut-list kbd').count() > 6, 'no keys listed')
+  await qa.keyboard.press('Escape')
+  await qa.waitForTimeout(500)
 })
 
 await test('sent page shows the recipient and has no Unread filter', async () => {

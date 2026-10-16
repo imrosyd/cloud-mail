@@ -59,6 +59,16 @@ const routers = {
             }
         }
     ],
+    'email:delete': [{
+        path: '/trash',
+        name: 'trash',
+        component: () => import('@/views/trash/index.vue'),
+        meta: {
+            title: 'trash',
+            name: 'trash',
+            menu: true
+        }
+    }],
     'user:query': [{
         path: '/all-users',
         name: 'user',

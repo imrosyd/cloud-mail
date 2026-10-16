@@ -23,9 +23,25 @@
               v-if="getSelectedMailsIds().length > 0 && showUnread" role="button" tabindex="0"
               :title="$t('markReadTip')" :aria-label="$t('markReadTip')" @keydown.enter="handleRead"
               @click="handleRead"/>
+        <Icon class="icon" icon="lucide:mail" width="18" height="18" role="button" tabindex="0"
+              v-if="getSelectedMailsIds().length > 0 && showUnread"
+              :title="$t('markUnreadTip')" :aria-label="$t('markUnreadTip')" @keydown.enter="handleUnread"
+              @click="handleUnread"/>
+        <Icon class="icon" icon="lucide:undo-2" width="18" height="18" role="button" tabindex="0"
+              v-if="props.type === 'trash' && getSelectedMailsIds().length > 0"
+              :title="$t('restore')" :aria-label="$t('restore')" @keydown.enter="restoreEmails(getSelectedMailsIds())"
+              @click="restoreEmails(getSelectedMailsIds())"/>
+        <span class="empty-trash" v-if="props.type === 'trash' && emailList.length > 0" role="button" tabindex="0"
+              @keydown.enter="emptyTrash" @click="emptyTrash">
+          <Icon icon="lucide:trash" width="15" height="15"/>{{ $t('emptyTrash') }}
+        </span>
       </div>
 
       <div class="header-right">
+        <button v-if="winWide" type="button" class="help-btn" :title="$t('shortcutsTitle')" :aria-label="$t('shortcutsTitle')"
+                @click="helpShow = true">
+          <Icon icon="lucide:keyboard" width="17" height="17"/>
+        </button>
         <div class="layout-switch" v-if="canSplit" role="group" :aria-label="$t('layoutLabel')">
           <button v-for="opt in layoutOptions" :key="opt.value" type="button" class="layout-btn"
                   :class="{on: splitMode === opt.value}" :title="$t(opt.label)" :aria-label="$t(opt.label)"
@@ -95,7 +111,7 @@
                   <span class="name" :title="rowAddress(item)">
                     <span>
                       <div class="unread" v-if="isMobile && (item.unread === EmailUnreadEnum.UNREAD && showUnread) "/>
-                      <slot name="name" :email="item"> {{ props.type === 'send' ? (item.toName || item.toEmail || item.name) : item.name }}</slot>
+                      <slot name="name" :email="item"> {{ showsRecipient(item) ? (item.toName || item.toEmail || item.name) : item.name }}</slot>
                     </span>
                     <span>
                       <Icon v-if="item.isStar" icon="fluent-color:star-16" width="18" height="18"/>
@@ -136,12 +152,19 @@
               </div>
               <div class="email-right" :style="showUserInfo ? 'align-self: start;':''">
                 <div class="row-actions" v-if="props.type !== 'draft' && props.type !== 'all-email'" @click.stop>
+                  <Icon v-if="props.type === 'trash'" class="row-action" icon="lucide:undo-2" width="17" height="17"
+                        role="button" tabindex="0" :title="$t('restore')" :aria-label="$t('restore')"
+                        @keydown.enter="restoreEmails([item.emailId])" @click="restoreEmails([item.emailId])"/>
                   <Icon v-if="showUnread && item.unread === EmailUnreadEnum.UNREAD" class="row-action" icon="fluent:mail-read-20-regular" width="19" height="19"
                         role="button" tabindex="0" :title="$t('markReadTip')" :aria-label="$t('markReadTip')"
                         @keydown.enter="emailRead(item.emailId)" @click="emailRead(item.emailId)"/>
+                  <Icon v-else-if="showUnread" class="row-action" icon="lucide:mail" width="17" height="17"
+                        role="button" tabindex="0" :title="$t('markUnreadTip')" :aria-label="$t('markUnreadTip')"
+                        @keydown.enter="markUnread([item.emailId])" @click="markUnread([item.emailId])"/>
                   <Icon v-perm="'email:delete'" class="row-action" icon="uiw:delete" width="15" height="15"
-                        role="button" tabindex="0" :title="$t('delete')" :aria-label="$t('delete')"
-                        @keydown.enter="removeWithUndo([item.emailId])" @click="removeWithUndo([item.emailId])"/>
+                        role="button" tabindex="0" :title="props.type === 'trash' ? $t('deleteForever') : $t('delete')"
+                        :aria-label="props.type === 'trash' ? $t('deleteForever') : $t('delete')"
+                        @keydown.enter="deleteOrPurge([item.emailId])" @click="deleteOrPurge([item.emailId])"/>
                 </div>
                 <span class="email-time" :title="item.createTime ? formatDetailDate(item.createTime) : null" :style="(item.unread === EmailUnreadEnum.UNREAD && showUnread) ? 'font-weight: bold' : ''">{{ item.formatCreateTime }}</span>
               </div>
@@ -186,16 +209,28 @@
                     :can-reply="['email', 'star'].includes(props.type)"
                     :can-forward="['email', 'send', 'star'].includes(props.type)"
                     :can-star="showStar"
+                    :can-restore="props.type === 'trash'"
+                    :can-unread="showUnread"
                     @open="email => emit('jump', email)"
                     @reply="openReply" @forward="openForward"
                     @star="starChange"
-                    @delete="email => removeWithUndo([email.emailId])"/>
+                    @restore="email => restoreEmails([email.emailId])"
+                    @unread="toggleRead"
+                    @delete="email => deleteOrPurge([email.emailId])"/>
       <div v-else class="preview-empty">
         <Icon icon="lucide:mail-open" width="40" height="40"/>
         <span>{{ $t('selectToRead') }}</span>
       </div>
     </aside>
     </div>
+    <el-dialog v-model="helpShow" :title="$t('shortcutsTitle')" width="380" append-to-body>
+      <dl class="shortcut-list">
+        <template v-for="row in shortcutRows" :key="row.keys">
+          <dt><kbd v-for="k in row.keys.split(' ')" :key="k">{{ k }}</kbd></dt>
+          <dd>{{ $t(row.label) }}</dd>
+        </template>
+      </dl>
+    </el-dialog>
     <el-dropdown
         ref="dropdownRef"
         @visible-change="visibleChange"
@@ -218,7 +253,23 @@
               </div>
             </template>
           </el-dropdown-item>
-          <el-dropdown-item v-if="['email'].includes(props.type)" @click="emailRead(rightClickEmail.emailId)" >
+          <el-dropdown-item v-if="props.type === 'trash'" @click="restoreEmails([rightClickEmail.emailId])">
+            <template #default>
+              <div class="right-dropdown-item">
+                <Icon icon="lucide:undo-2" width="19" height="19" />
+                <span>{{t('restore')}}</span>
+              </div>
+            </template>
+          </el-dropdown-item>
+          <el-dropdown-item v-if="['email'].includes(props.type) && rightClickEmail.unread !== EmailUnreadEnum.UNREAD" @click="markUnread([rightClickEmail.emailId])">
+            <template #default>
+              <div class="right-dropdown-item">
+                <Icon icon="lucide:mail" width="19" height="19" />
+                <span>{{t('markAsUnread')}}</span>
+              </div>
+            </template>
+          </el-dropdown-item>
+          <el-dropdown-item v-if="['email'].includes(props.type) && rightClickEmail.unread === EmailUnreadEnum.UNREAD" @click="emailRead(rightClickEmail.emailId)" >
             <template #default>
               <div class="right-dropdown-item">
                 <Icon icon="fluent:mail-read-20-regular" width="20" height="20" />
@@ -278,7 +329,7 @@
             <template #default>
               <div class="right-dropdown-item">
                 <Icon icon="uiw:delete" width="16" height="20" style="margin-left: 1px;margin-right: 3px" />
-                <span>{{t('delete')}}</span>
+                <span>{{ props.type === 'trash' ? t('deleteForever') : t('delete') }}</span>
               </div>
             </template>
           </el-dropdown-item>
@@ -299,7 +350,7 @@ import {useSettingStore} from "@/store/setting.js";
 import {sleep} from "@/utils/time-utils.js"
 import {fromNow, formatDetailDate} from "@/utils/day.js";
 import {useListShortcuts} from "@/composables/useListShortcuts.js";
-import {emailRestore} from "@/request/email.js";
+import {emailRestore, emailPurge, emailEmptyTrash, emailMarkUnread} from "@/request/email.js";
 import {useI18n} from "vue-i18n";
 import {EmailUnreadEnum} from "@/enums/email-enum.js";
 import { useClipboard } from '@/composables/useClipboard.js'
@@ -407,9 +458,20 @@ const layoutOptions = [
 ]
 const winWide = ref(innerWidth > 1024)
 // Reading next to the list needs room and a list type that opens a message
-const canSplit = computed(() => winWide.value && ['email', 'send', 'star'].includes(props.type))
+const canSplit = computed(() => winWide.value && ['email', 'send', 'star', 'trash'].includes(props.type))
 const splitMode = computed(() => canSplit.value ? uiStore.listLayout : 'list')
 const previewId = ref(0)
+const helpShow = ref(false)
+const shortcutRows = [
+  {keys: 'J K', label: 'scMove'},
+  {keys: 'Enter', label: 'scOpen'},
+  {keys: 'X', label: 'scSelect'},
+  {keys: 'S', label: 'scStar'},
+  {keys: 'U', label: 'scToggleRead'},
+  {keys: 'R', label: 'scReply'},
+  {keys: '#', label: 'scDelete'},
+  {keys: '?', label: 'scHelp'},
+]
 const previewEmail = computed(() => splitMode.value === 'list' ? null : emailList.find(item => item.emailId === previewId.value) || null)
 let readTimer = null
 
@@ -506,12 +568,13 @@ const {cursorId, kbd} = useListShortcuts({
     if (splitMode.value !== 'list' && emailList[index]) selectPreview(emailList[index])
   },
   handlers: {
+    help: () => helpShow.value = !helpShow.value,
     open: (email) => splitMode.value !== 'list' ? emit('jump', email) : jumpDetails(email),
     select: (email) => email.checked = !email.checked,
     star: (email) => props.showStar && starChange(email),
-    read: (email) => props.showUnread && email.unread === EmailUnreadEnum.UNREAD && emailRead(email.emailId),
+    read: (email) => props.showUnread && toggleRead(email),
     reply: (email) => ['email', 'star'].includes(props.type) && openReply(email),
-    remove: (email) => props.type !== 'draft' && props.type !== 'all-email' && removeWithUndo([email.emailId]),
+    remove: (email) => props.type !== 'draft' && props.type !== 'all-email' && deleteOrPurge([email.emailId]),
   }
 })
 
@@ -829,7 +892,7 @@ function localRead(emailIds) {
 
 // Sent mail lists the recipient, everything else the sender
 function rowAddress(item) {
-  const sent = props.type === 'send'
+  const sent = showsRecipient(item)
   const name = sent ? item.toName : item.name
   const address = sent ? item.toEmail : item.sendEmail
   if (!address) return null
@@ -838,6 +901,69 @@ function rowAddress(item) {
 
 function hasAtt(email) {
   return Array.isArray(email.attList) && email.attList.some(att => att.type !== 1)
+}
+
+function showsRecipient(item) {
+  return props.type === 'send' || (props.type === 'trash' && item.type === 1)
+}
+
+function toggleRead(email) {
+  if (email.unread === EmailUnreadEnum.UNREAD) emailRead(email.emailId)
+  else markUnread([email.emailId])
+}
+
+function markUnread(emailIds) {
+  emailMarkUnread(emailIds).then(() => {
+    emailIds.forEach(emailId => {
+      const row = emailList.find(item => item.emailId === emailId)
+      if (row) {
+        row.unread = EmailUnreadEnum.UNREAD
+        row.checked = false
+      }
+    })
+  })
+}
+
+function handleUnread() {
+  markUnread(getSelectedMailsIds())
+}
+
+// The trash deletes for good, so it asks first and has no undo; everywhere else deleting can be undone
+function deleteOrPurge(emailIds) {
+  if (props.type === 'trash') return purgeWithConfirm(emailIds, emailIds.length > 1 ? 'purgeConfirm' : 'purgeOneConfirm')
+  return removeWithUndo(emailIds)
+}
+
+function purgeWithConfirm(emailIds, messageKey) {
+  return ElMessageBox.confirm(t(messageKey), {
+    confirmButtonText: t('confirm'),
+    cancelButtonText: t('cancel'),
+    type: 'warning'
+  }).then(() => props.emailDelete(emailIds).then(() => {
+    ElMessage({message: t('deletedForever'), type: 'success', plain: true})
+    emailStore.deleteIds = emailIds
+  })).catch(() => {})
+}
+
+function emptyTrash() {
+  return ElMessageBox.confirm(t('emptyTrashConfirm'), {
+    confirmButtonText: t('confirm'),
+    cancelButtonText: t('cancel'),
+    type: 'warning'
+  }).then(() => emailEmptyTrash().then(() => {
+    ElMessage({message: t('emptyTrashDone'), type: 'success', plain: true})
+    refreshList()
+  })).catch(() => {})
+}
+
+function restoreEmails(emailIds) {
+  return emailRestore(emailIds).then(() => {
+    ElMessage({message: t('emailRestored'), type: 'success', plain: true})
+    emailStore.deleteIds = emailIds
+    emailStore.emailScroll?.refreshList?.()
+    emailStore.sendScroll?.refreshList?.()
+    emailStore.starScroll?.refreshList?.()
+  })
 }
 
 // Delete is a soft delete on the server, so it can be undone right after
@@ -897,11 +1023,16 @@ function swipeEnd(e, item) {
   swipe = null
   if (done) {
     e.preventDefault()
-    removeWithUndo([item.emailId])
+    deleteOrPurge([item.emailId])
   }
 }
 
 function rightDelete(emailId) {
+
+  if (props.type === 'trash') {
+    purgeWithConfirm([emailId], 'purgeOneConfirm')
+    return
+  }
 
   if (props.type === 'all-email') {
     ElMessageBox.confirm(t('delOneEmailConfirm'), {
@@ -932,6 +1063,10 @@ async function copyCode(code) {
 }
 
 function handleDelete() {
+  if (props.type === 'trash') {
+    purgeWithConfirm(getSelectedMailsIds(), 'purgeConfirm')
+    return
+  }
   ElMessageBox.confirm(t('delEmailsConfirm'), {
     confirmButtonText: t('confirm'),
     cancelButtonText: t('cancel'),
@@ -1267,6 +1402,72 @@ function loadData() {
   justify-content: center;
   gap: 10px;
   color: var(--el-text-color-placeholder);
+}
+
+.help-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin-right: 6px;
+  align-self: center;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--el-text-color-secondary);
+  cursor: pointer;
+
+  &:hover, &:focus-visible {
+    background: var(--el-fill-color);
+    color: var(--el-text-color-primary);
+  }
+}
+
+.shortcut-list {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px 18px;
+  margin: 0;
+  align-items: center;
+
+  dt {
+    display: flex;
+    gap: 4px;
+  }
+
+  dd {
+    margin: 0;
+    color: var(--el-text-color-regular);
+  }
+
+  kbd {
+    min-width: 24px;
+    padding: 2px 6px;
+    text-align: center;
+    border: 1px solid var(--el-border-color);
+    border-bottom-width: 2px;
+    border-radius: 5px;
+    background: var(--el-fill-color-light);
+    font-family: inherit;
+    font-size: 12px;
+  }
+}
+
+.empty-trash {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--el-color-danger);
+  padding: 2px 8px;
+  border-radius: 6px;
+  transition: background-color .15s;
+
+  &:hover, &:focus-visible {
+    background: var(--el-color-danger-light-9);
+  }
 }
 
 .layout-switch {

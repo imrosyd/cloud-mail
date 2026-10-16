@@ -48,6 +48,9 @@ export function useListShortcuts({getList, onMove, handlers}) {
         } else if (key === 'k' || key === 'ArrowUp') {
             e.preventDefault()
             move(-1)
+        } else if (key === '?') {
+            e.preventDefault()
+            handlers.help?.()
         } else if (current) {
             const map = {Enter: 'open', x: 'select', s: 'star', u: 'read', r: 'reply', '#': 'remove', Delete: 'remove'}
             const name = map[key]

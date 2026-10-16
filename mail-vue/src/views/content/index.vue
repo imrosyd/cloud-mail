@@ -36,8 +36,13 @@
             <el-alert v-if="email.status === 4" :closable="false" :title="$t('complained')" class="email-msg" type="warning" show-icon />
             <el-alert v-if="email.status === 5" :closable="false" :title="$t('delayed')" class="email-msg" type="warning" show-icon />
           </div>
+<div class="img-banner" v-if="hiddenCount > 0">
+            <Icon icon="lucide:image-off" width="16" height="16"/>
+            <span>{{ $t('imagesHidden') }}</span>
+            <button type="button" @click="showImages">{{ $t('showImages') }}</button>
+          </div>
           <el-scrollbar class="htm-scrollbar" :class="!email.attList?.length ? 'bottom-distance' : ''">
-            <ShadowHtml class="shadow-html" :html="formatImage(email.content)" v-if="email.content" />
+            <ShadowHtml class="shadow-html" :html="html" v-if="email.content" />
             <pre v-else class="email-text" v-html="linkify(email.text)"></pre>
           </el-scrollbar>
           <div class="att" v-if="email.attList?.length > 0">
@@ -76,12 +81,13 @@
   </div>
 </template>
 <script setup>
+import {useRemoteImagePolicy} from "@/composables/useRemoteImagePolicy.js";
 import ShadowHtml from '@/components/shadow-html/index.vue'
 import {linkify} from '@/utils/linkify.js'
 import {reactive, ref, watch, onMounted, onUnmounted} from "vue";
 import {useRouter} from 'vue-router'
 import {ElMessage, ElMessageBox} from 'element-plus'
-import {emailDelete, emailRead} from "@/request/email.js";
+import {emailDelete, emailRead, emailPurge} from "@/request/email.js";
 import {Icon} from "@iconify/vue";
 import {useEmailStore} from "@/store/email.js";
 import {useAccountStore} from "@/store/account.js";
@@ -106,6 +112,7 @@ const showPreview = ref(false)
 const srcList = reactive([])
 
 const { t } = useI18n()
+const {html, hiddenCount, showImages} = useRemoteImagePolicy(() => email, formatImage)
 watch(() => accountStore.currentAccountId, () => {
   handleBack()
 })
@@ -200,12 +207,21 @@ const handleBack = () => {
 }
 
 const handleDelete = () => {
-  ElMessageBox.confirm(t('delEmailConfirm'), {
+  ElMessageBox.confirm(emailStore.contentData.delType === 'trash' ? t('purgeOneConfirm') : t('delEmailConfirm'), {
     confirmButtonText: t('confirm'),
     cancelButtonText: t('cancel'),
     type: 'warning'
   }).then(() => {
-    if (emailStore.contentData.delType === 'logic') {
+    if (emailStore.contentData.delType === 'trash') {
+      emailPurge([email.emailId]).then(() => {
+        ElMessage({
+          message: t('deletedForever'),
+          type: 'success',
+          plain: true,
+        })
+        emailStore.deleteIds = [email.emailId]
+      })
+    } else if (emailStore.contentData.delType === 'logic') {
       emailDelete(email.emailId).then(() => {
         ElMessage({
           message: t('delSuccessMsg'),
@@ -441,4 +457,27 @@ const handleDelete = () => {
 }
 
 
+
+.img-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: var(--el-fill-color-light);
+  color: var(--el-text-color-regular);
+  font-size: 13px;
+
+  button {
+    margin-left: auto;
+    border: none;
+    background: transparent;
+    color: var(--el-color-primary);
+    font-weight: 600;
+    cursor: pointer;
+    padding: 2px 4px;
+  }
+}
 </style>

@@ -10,6 +10,28 @@ export function emailList(accountId, allReceive, emailId, timeSort, size, type, 
     return http.get('/email/list', {params: {accountId, allReceive, emailId, timeSort, size, type, keyword: keyword || undefined, unread: unread ? 1 : undefined, starred: starred ? 1 : undefined}})
 }
 
+export function emailTrashList(emailId, timeSort, size) {
+    return http.get('/email/list', {params: {allReceive: 1, accountId: 0, emailId, timeSort, size, trash: 1}})
+}
+
+export function emailPurge(emailIds) {
+    return http.delete('/email/purge?emailIds=' + emailIds).then(data => {
+        useNotifyStore().refresh()
+        return data
+    })
+}
+
+export function emailEmptyTrash() {
+    return http.delete('/email/emptyTrash')
+}
+
+export function emailMarkUnread(emailIds) {
+    return http.put('/email/markUnread', {emailIds}).then(data => {
+        useNotifyStore().refresh()
+        return data
+    })
+}
+
 export function emailDelete(emailIds) {
     return http.delete('/email/delete?emailIds=' + emailIds).then(data => {
         useNotifyStore().refresh()

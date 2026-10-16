@@ -6,6 +6,14 @@
         <Icon icon="lucide:maximize-2" width="17" height="17"/>
       </span>
       <span class="bar-gap"></span>
+      <span v-if="canRestore" class="bar-btn" role="button" tabindex="0" :title="$t('restore')" :aria-label="$t('restore')"
+            @click="$emit('restore', email)" @keydown.enter="$emit('restore', email)">
+        <Icon icon="lucide:undo-2" width="18" height="18"/>
+      </span>
+      <span v-if="canUnread && email.unread !== 0" class="bar-btn" role="button" tabindex="0" :title="$t('markUnreadTip')" :aria-label="$t('markUnreadTip')"
+            @click="$emit('unread', email)" @keydown.enter="$emit('unread', email)">
+        <Icon icon="lucide:mail" width="18" height="18"/>
+      </span>
       <span v-if="canReply" v-perm="'email:send'" class="bar-btn" role="button" tabindex="0" :title="$t('reply')" :aria-label="$t('reply')"
             @click="$emit('reply', email)" @keydown.enter="$emit('reply', email)">
         <Icon icon="lucide:reply" width="18" height="18"/>
@@ -19,7 +27,7 @@
         <Icon v-if="email.isStar" icon="fluent-color:star-16" width="19" height="19"/>
         <Icon v-else icon="lucide:star" width="18" height="18"/>
       </span>
-      <span v-perm="'email:delete'" class="bar-btn" role="button" tabindex="0" :title="$t('delete')" :aria-label="$t('delete')"
+      <span v-perm="'email:delete'" class="bar-btn" role="button" tabindex="0" :title="canRestore ? $t('deleteForever') : $t('delete')" :aria-label="canRestore ? $t('deleteForever') : $t('delete')"
             @click="$emit('delete', email)" @keydown.enter="$emit('delete', email)">
         <Icon icon="lucide:trash-2" width="17" height="17"/>
       </span>
@@ -41,8 +49,13 @@
         <el-alert v-if="email.status === 3" :closable="false" :title="failMessage" class="alert" type="error" show-icon/>
         <el-alert v-if="email.status === 4" :closable="false" :title="$t('complained')" class="alert" type="warning" show-icon/>
         <el-alert v-if="email.status === 5" :closable="false" :title="$t('delayed')" class="alert" type="warning" show-icon/>
+        <div class="img-banner" v-if="hiddenCount > 0">
+            <Icon icon="lucide:image-off" width="16" height="16"/>
+            <span>{{ $t('imagesHidden') }}</span>
+            <button type="button" @click="showImages">{{ $t('showImages') }}</button>
+          </div>
         <div class="mail-content">
-          <ShadowHtml v-if="email.content" :html="formatImage(email.content)"/>
+          <ShadowHtml v-if="email.content" :html="html"/>
           <pre v-else class="plain" v-html="linkify(email.text)"></pre>
         </div>
         <div class="att" v-if="email.attList && email.attList.length > 0">
@@ -75,17 +88,21 @@ import {getExtName, formatBytes} from "@/utils/file-utils.js";
 import {cvtR2Url, toOssDomain} from "@/utils/convert.js";
 import {getIconByName} from "@/utils/icon-utils.js";
 import {useSettingStore} from "@/store/setting.js";
+import {useRemoteImagePolicy} from "@/composables/useRemoteImagePolicy.js";
 
 const props = defineProps({
   email: {type: Object, required: true},
   canReply: {type: Boolean, default: true},
   canForward: {type: Boolean, default: true},
-  canStar: {type: Boolean, default: true}
+  canStar: {type: Boolean, default: true},
+  canRestore: {type: Boolean, default: false},
+  canUnread: {type: Boolean, default: false}
 })
 
-defineEmits(['open', 'reply', 'forward', 'star', 'delete'])
+defineEmits(['open', 'reply', 'forward', 'star', 'delete', 'restore', 'unread'])
 
 const settingStore = useSettingStore()
+const {html, hiddenCount, showImages} = useRemoteImagePolicy(() => props.email, formatImage)
 const viewerShow = ref(false)
 const srcList = reactive([])
 
@@ -285,5 +302,28 @@ function showImage(key, filename) {
 .att-size {
   color: var(--el-text-color-secondary);
   font-size: 12px;
+}
+
+.img-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: var(--el-fill-color-light);
+  color: var(--el-text-color-regular);
+  font-size: 13px;
+
+  button {
+    margin-left: auto;
+    border: none;
+    background: transparent;
+    color: var(--el-color-primary);
+    font-weight: 600;
+    cursor: pointer;
+    padding: 2px 4px;
+  }
 }
 </style>

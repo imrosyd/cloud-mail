@@ -15,6 +15,8 @@ export const useUiStore = defineStore('ui', {
         listLayout: 'list',
         // Size of the list beside or above the message, in px; 0 keeps the automatic size
         listWidth: 0,
+        // Hide images the sender hosts, so opening a mail does not report back to them
+        blockRemoteImages: false,
         listHeight: 0,
         asideCount: {
             email: 0,
@@ -32,6 +34,6 @@ export const useUiStore = defineStore('ui', {
         }
     },
     persist: {
-        pick: ['accountShow','dark','listLayout','listWidth','listHeight'],
+        pick: ['accountShow','dark','listLayout','listWidth','listHeight','blockRemoteImages'],
     },
 })

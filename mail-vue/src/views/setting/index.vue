@@ -57,6 +57,16 @@
         <el-switch v-model="notifyStore.sound"/>
       </div>
     </div>
+    <div class="notify">
+      <div class="title">{{$t('privacy')}}</div>
+      <div class="notify-item">
+        <div>
+          <div>{{$t('blockImages')}}</div>
+          <div class="notify-desc">{{$t('blockImagesDesc')}}</div>
+        </div>
+        <el-switch v-model="uiStore.blockRemoteImages"/>
+      </div>
+    </div>
     <div class="del-email" v-perm="'my:delete'">
       <div class="title">{{$t('deleteUser')}}</div>
       <div style="color: var(--regular-text-color);">
@@ -85,11 +95,13 @@ import {useAccountStore} from "@/store/account.js";
 import {useI18n} from "vue-i18n";
 import {useSettingStore} from "@/store/setting.js";
 import {useNotifyStore} from "@/store/notify.js";
+import {useUiStore} from "@/store/ui.js";
 
 const { t } = useI18n()
 const accountStore = useAccountStore()
 const settingStore = useSettingStore()
 const notifyStore = useNotifyStore()
+const uiStore = useUiStore()
 const userStore = useUserStore();
 const setPwdLoading = ref(false)
 const setNameShow = ref(false)

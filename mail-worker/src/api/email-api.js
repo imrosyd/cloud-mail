@@ -24,6 +24,21 @@ app.delete('/email/delete', async (c) => {
 	return c.json(result.ok());
 });
 
+app.delete('/email/purge', async (c) => {
+	await emailService.purge(c, c.req.query(), userContext.getUserId(c));
+	return c.json(result.ok());
+});
+
+app.delete('/email/emptyTrash', async (c) => {
+	const count = await emailService.emptyTrash(c, userContext.getUserId(c));
+	return c.json(result.ok({ count }));
+});
+
+app.put('/email/markUnread', async (c) => {
+	await emailService.markUnread(c, await c.req.json(), userContext.getUserId(c));
+	return c.json(result.ok());
+});
+
 app.put('/email/restore', async (c) => {
 	await emailService.restore(c, await c.req.json(), userContext.getUserId(c));
 	return c.json(result.ok());
