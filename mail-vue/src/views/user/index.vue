@@ -104,13 +104,13 @@
             </template>
           </el-table-column>
         </el-table>
-        <div class="pagination" v-if="total > 10">
+        <div class="pagination" v-if="total > 5">
           <el-pagination
               :size="pageSize"
               :current-page="params.num"
               :page-size="params.size"
               :pager-count="pagerCount"
-              :page-sizes="[10, 15, 20, 25, 30, 50]"
+              :page-sizes="[5, 10, 20, 50]"
               background
               :layout="layout"
               :total="total"
@@ -123,7 +123,7 @@
               :current-page="params.num"
               :page-size="params.size"
               :pager-count="pagerCount"
-              :page-sizes="[10, 15, 20, 25, 30, 50]"
+              :page-sizes="[5, 10, 20, 50]"
               background
               layout="sizes, total"
               :total="total"
@@ -366,6 +366,7 @@
 
 <script setup>
 import {defineOptions, h, reactive, ref, watch, onMounted, onUnmounted} from 'vue'
+import {readPageSize, savePageSize, nearestPageSize} from "@/composables/usePageSize.js";
 import {
   userList,
   userDelete,
@@ -446,7 +447,7 @@ const addForm = reactive({
 const params = reactive({
   email: '',
   num: 1,
-  size: 15,
+  size: readPageSize('user'),
   timeSort: 0,
   status: -1
 })
@@ -484,7 +485,7 @@ const paramsStar = localStorage.getItem('user-params')
 if (paramsStar) {
   const localParams = JSON.parse(paramsStar)
   params.num = localParams.num
-  params.size = localParams.size
+  params.size = nearestPageSize(localParams.size)
   params.timeSort = localParams.timeSort
   params.status = localParams.status
 }
@@ -992,6 +993,7 @@ function numChange(num) {
 
 function sizeChange(size) {
   params.size = size
+  savePageSize('user', size)
   getUserList()
 }
 

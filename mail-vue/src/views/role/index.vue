@@ -10,8 +10,7 @@
         <loading/>
       </div>
       <el-table
-          :data="roles"
-          style="height: 100%;"
+          :data="pagedRoles"
           :empty-text="''"
       >
         <el-table-column width="10"/>
@@ -46,6 +45,7 @@
           </template>
         </el-table-column>
       </el-table>
+      <pageBar v-model:page="pageNum" v-model:size="pageSize" :total="roles.length" storage-key="role"/>
     </el-scrollbar>
     <el-dialog top="5vh" class="dialog" v-model="roleFormShow" @closed="resetForm">
       <template #header>
@@ -144,7 +144,9 @@
 </template>
 <script setup>
 import {Icon} from "@iconify/vue";
-import {defineOptions, nextTick, reactive, ref, onMounted, onUnmounted} from "vue";
+import {computed, defineOptions, nextTick, reactive, ref, onMounted, onUnmounted} from "vue"
+import pageBar from "@/components/page-bar/index.vue";
+import {readPageSize} from "@/composables/usePageSize.js";;
 import {roleAdd, roleDelete, rolePermTree, roleRoleList, roleSet, roleSetDef} from "@/request/role.js";
 import loading from '@/components/loading/index.vue';
 import {useRoleStore} from "@/store/role.js";
@@ -164,6 +166,10 @@ const roleStore = useRoleStore();
 const roleFormShow = ref(false)
 const treeList = reactive([])
 const roles = ref([])
+const pageNum = ref(1)
+const pageSize = ref(readPageSize('role'))
+// The roles arrive in one piece; only the part for the current page is shown
+const pagedRoles = computed(() => roles.value.slice((pageNum.value - 1) * pageSize.value, pageNum.value * pageSize.value))
 const tree = ref({})
 const permLoading = ref(false)
 const tableLoading = ref(false)
@@ -390,6 +396,8 @@ function refresh() {
 function getRoleList() {
   roleRoleList().then(list => {
     roles.value = list
+    const lastPage = Math.max(1, Math.ceil(list.length / pageSize.value))
+    if (pageNum.value > lastPage) pageNum.value = lastPage
   }).finally(() => {
     tableLoading.value = false
     setTimeout(() => {

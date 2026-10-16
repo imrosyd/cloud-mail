@@ -1,6 +1,6 @@
 import orm from '../entity/orm';
 import regKey from '../entity/reg-key';
-import { inArray, like, eq, desc, sql, or } from 'drizzle-orm';
+import { inArray, like, eq, desc, sql, or, count } from 'drizzle-orm';
 import roleService from './role-service';
 import BizError from '../error/biz-error';
 import { formatDetailDate, toUtc } from '../utils/date-uitil';
@@ -60,12 +60,23 @@ const regKeyService = {
 
 		const {code} = params
 		let query = orm(c).select().from(regKey)
+		let countQuery = orm(c).select({ total: count() }).from(regKey)
 
 		if (code) {
 			query = query.where(like(regKey.code, `${code}%`))
+			countQuery = countQuery.where(like(regKey.code, `${code}%`))
 		}
 
-		const regKeyList = await query.orderBy(desc(regKey.regKeyId)).all();
+		// A client that sends no size gets every row as a plain array, as before
+		const paged = params.size !== undefined && params.size !== '';
+		let size = Math.min(Math.max(Number(params.size) || 10, 1), 50);
+		const num = Math.max(Number(params.num) || 1, 1);
+
+		let ordered = query.orderBy(desc(regKey.regKeyId));
+		if (paged) {
+			ordered = ordered.limit(size).offset((num - 1) * size);
+		}
+		const regKeyList = await ordered.all();
 		const roleList = await roleService.roleSelectUse(c);
 
 		const today = toUtc().tz('Asia/Shanghai').startOf('day')
@@ -82,7 +93,12 @@ const regKeyService = {
 			}
 		})
 
-		return regKeyList;
+		if (!paged) {
+			return regKeyList;
+		}
+
+		const totalRow = await countQuery.get();
+		return { list: regKeyList, total: totalRow.total };
 	},
 
 	async reduceCount(c, code, count) {

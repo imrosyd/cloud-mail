@@ -59,6 +59,7 @@
       <div class="empty" v-if="regKeyData.length === 0">
         <el-empty v-if="!regKeyFirst" :image-size="isMobile ? 120 : null" :description="$t('noCodeFound')"/>
       </div>
+      <pageBar v-model:page="params.num" v-model:size="params.size" :total="total" storage-key="reg-key" @change="getList(true)"/>
     </el-scrollbar>
     <el-dialog v-model="showAdd" :title="$t('addRegKey')">
       <div class="container">
@@ -104,6 +105,8 @@ import {roleSelectUse} from "@/request/role.js";
 import {useRoleStore} from "@/store/role.js";
 import {regKeyAdd, regKeyList, regKeyClearNotUse, regKeyDelete, regKeyHistory} from "@/request/reg-key.js";
 import {getTextWidth} from "@/utils/text.js";
+import pageBar from "@/components/page-bar/index.vue";
+import {readPageSize} from "@/composables/usePageSize.js";
 import dayjs from "dayjs";
 import {tzDayjs} from "@/utils/day.js";
 import {useI18n} from "vue-i18n";
@@ -116,7 +119,10 @@ const roleStore = useRoleStore();
 const settingStore = useSettingStore();
 const params = reactive({
   code: '',
+  num: 1,
+  size: readPageSize('reg-key'),
 })
+const total = ref(0)
 
 const {t} = useI18n()
 const roleList = reactive([])
@@ -237,10 +243,12 @@ function formatExpireTime(expireTime) {
 
 function refresh() {
   params.code = null
+  params.num = 1
   getList(true)
 }
 
 function search() {
+  params.num = 1
   getList(true)
 }
 
@@ -248,7 +256,14 @@ function getList(showLoading = false) {
   if (showLoading) {
     regKeyLoading.value = true
   }
-  regKeyList(params).then(list => {
+  regKeyList(params).then(({list, total: count}) => {
+    // Deleting the last code on a page leaves it empty: step back to the page before
+    if (list.length === 0 && count > 0 && params.num > 1) {
+      params.num = Math.max(1, Math.ceil(count / params.size))
+      getList()
+      return
+    }
+    total.value = count
     regKeyData.length = 0
     regKeyData.push(...list)
     regKeyLoading.value = false
