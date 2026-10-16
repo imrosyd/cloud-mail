@@ -6,7 +6,9 @@ function escapeHtml(text) {
 }
 
 // Escapes plain text and turns URLs into links that open in a new tab
-export function linkify(text = '') {
+export function linkify(text) {
+    // Mail with no text part arrives as null, which a default parameter does not cover
+    text = text ?? ''
     let out = ''
     let last = 0
     for (const match of text.matchAll(URL_RE)) {
