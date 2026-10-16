@@ -1,7 +1,7 @@
 <template>
   <div class="header" :class="!hasPerm('email:send') ? 'not-send' : ''">
     <div class="header-btn">
-      <hanburger @click="changeAside"></hanburger>
+      <hanburger :is-active="uiStore.asideShow" @click="changeAside"></hanburger>
       <span class="breadcrumb-item">{{ $t(route.meta.title) }}</span>
     </div>
     <div v-perm="'email:send'" class="writer-box" @click="openSend">

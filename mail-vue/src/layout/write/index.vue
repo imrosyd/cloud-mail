@@ -4,15 +4,31 @@
       <div class="title">
         <div class="title-left">
           <span class="title-text">
-            <Icon icon="hugeicons:quill-write-01" width="28" height="28"/>
+            <Icon icon="hugeicons:quill-write-01" width="24" height="24"/>
           </span>
-          <span class="sender">{{ $t('sender') }}:</span>
-          <span class="sender-name">{{ form.name }}</span>
-          <span class="send-email"><{{ form.sendEmail }}></span>
+          <span class="title-label">{{ windowTitle }}</span>
+          <el-select v-model="form.accountId" class="sender-select" popper-class="sender-popper" filterable
+                     :aria-label="$t('sender')" :loading="sendersLoading" :no-data-text="$t('noMessagesFound')"
+                     @visible-change="open => open && loadSenders()" @change="pickSender">
+            <template #prefix>
+              <span class="sender-from">{{ $t('sender') }}</span>
+              <span class="sender-avatar">{{ senderInitial(currentSender) }}</span>
+            </template>
+            <el-option v-for="item in senderOptions" :key="item.accountId" :value="item.accountId" :label="senderLabel(item)">
+              <div class="sender-option">
+                <span class="sender-avatar">{{ senderInitial(item) }}</span>
+                <span class="sender-option-text">
+                  <span class="sender-option-name">{{ item.name }}</span>
+                  <span class="sender-option-email">{{ item.email }}</span>
+                </span>
+                <Icon v-if="item.accountId === form.accountId" icon="lucide:check" width="16" height="16" class="sender-option-check"/>
+              </div>
+            </el-option>
+          </el-select>
         </div>
-        <div @click="close" style="cursor: pointer;">
-          <Icon icon="material-symbols-light:close-rounded" width="22" height="22"/>
-        </div>
+        <button type="button" class="close-btn" :title="$t('closeWindow')" :aria-label="$t('closeWindow')" @click="close">
+          <Icon icon="lucide:x" width="18" height="18"/>
+        </button>
       </div>
       <div class="container">
         <el-input-tag  @add-tag="addTagChange" tag-type="primary" @input="inputChange" size="default" v-model="form.receiveEmail" >
@@ -46,25 +62,24 @@
         <el-input v-model="form.subject" :placeholder="t('subject')" />
         <tinyEditor :def-value="defValue" ref="editor" @change="change" @focus="focusChange" />
         <div class="button-item">
-          <div class="att-add" @click="chooseFile">
-            <Icon icon="iconamoon:attachment-fill" width="24" height="24"/>
-          </div>
-          <div class="att-clear" @click="clearContent">
-            <Icon icon="icon-park-outline:clear-format" width="24" height="24 "/>
-          </div>
+          <button type="button" class="tool-btn att-add" :title="$t('attachFiles')" :aria-label="$t('attachFiles')" @click="chooseFile">
+            <Icon icon="lucide:paperclip" width="19" height="19"/>
+          </button>
+          <button type="button" class="tool-btn att-clear" :title="$t('clearMessage')" :aria-label="$t('clearMessage')" @click="clearContent">
+            <Icon icon="lucide:eraser" width="19" height="19"/>
+          </button>
           <div class="att-list">
             <div class="att-item" v-for="(item,index) in form.attachments" :key="index">
               <Icon v-bind="getIconByName(item.filename)"/>
               <span class="att-filename">{{ item.filename }}</span>
               <span class="att-size">{{ formatBytes(item.size) }}</span>
-              <Icon style="cursor: pointer;" icon="material-symbols-light:close-rounded" @click="delAtt(index)"
-                    width="22" height="22"/>
+              <Icon class="att-remove" icon="lucide:x" @click="delAtt(index)" width="16" height="16"/>
             </div>
           </div>
           <div>
             <el-button type="primary" @click="sendEmail" v-if="form.sendType === 'reply'">{{ $t('reply') }}</el-button>
             <el-button type="primary" @click="sendEmail" v-else-if="form.sendType === 'forward'">{{ $t('forward') }}</el-button>
-            <el-button type="primary" @click="sendEmail" v-else>{{ $t('send') }}</el-button>
+            <el-button type="primary" @click="sendEmail" v-else :title="'Ctrl+Enter'">{{ $t('send') }}</el-button>
           </div>
         </div>
       </div>
@@ -98,6 +113,7 @@ import {h, nextTick, onMounted, onUnmounted, reactive, ref, toRaw, computed} fro
 import {Icon} from "@iconify/vue";
 import {useUserStore} from "@/store/user.js";
 import {emailSend} from "@/request/email.js";
+import {accountListAll} from "@/request/account.js";
 import {isEmail} from "@/utils/verify-utils.js";
 import {useAccountStore} from "@/store/account.js";
 import {useEmailStore} from "@/store/email.js";
@@ -160,6 +176,54 @@ const form = reactive({
 })
 
 const selectRecipientList = ref([])
+
+// Addresses this user can send from; loaded when the sender dropdown opens or a window is opened
+const senders = ref([])
+const sendersLoading = ref(false)
+let sendersRequest = null
+
+const senderOptions = computed(() => {
+  // The current sender stays selectable even before the list arrives or if it is missing from it
+  if (form.accountId > 0 && !senders.value.some(item => item.accountId === form.accountId)) {
+    return [{accountId: form.accountId, email: form.sendEmail, name: form.name}, ...senders.value]
+  }
+  return senders.value
+})
+
+const windowTitle = computed(() => form.sendType === 'reply' ? t('reply') : form.sendType === 'forward' ? t('forward') : t('newMessage'))
+
+const currentSender = computed(() => senderOptions.value.find(item => item.accountId === form.accountId) || {email: form.sendEmail, name: form.name})
+
+function senderInitial(item) {
+  return String(item?.name || item?.email || '?').trim().charAt(0).toUpperCase()
+}
+
+function senderLabel(item) {
+  return item.name && item.name !== item.email.split('@')[0] ? `${item.name} <${item.email}>` : item.email
+}
+
+function loadSenders() {
+  if (sendersRequest) return sendersRequest
+  sendersLoading.value = true
+  sendersRequest = accountListAll().then(list => {
+    senders.value = list
+  }).catch(e => {
+    console.error(e)
+  }).finally(() => {
+    sendersLoading.value = false
+    // Allow a fresh read next time, so a newly added address shows up
+    setTimeout(() => sendersRequest = null, 1000)
+  })
+  return sendersRequest
+}
+
+function pickSender(accountId) {
+  const chosen = senders.value.find(item => item.accountId === accountId)
+  if (!chosen) return
+  form.accountId = chosen.accountId
+  form.sendEmail = chosen.email
+  form.name = chosen.name
+}
 
 const contacts = computed(() => writerStore.sendRecipientRecord.map(item => ({email: item})))
 
@@ -488,7 +552,7 @@ function openReply(email) {
           ${formatImage(email.content) || `<pre style="font-family: inherit;word-break: break-word;white-space: pre-wrap;margin: 0">${plainText(email.text)}</pre>`}
       </article>
     </blockquote>`
-    open()
+    open(email.accountId)
 
     nextTick(() => {
       backReply.content = editor.value.getContent()
@@ -511,7 +575,7 @@ function formatImage(content) {
   return content.replace(/{{domain}}/g, toOssDomain(domain) + '/');
 }
 
-function open() {
+function open(preferredAccountId = null) {
   if (!accountStore.currentAccount.email) {
     form.sendEmail = userStore.user.email;
     form.accountId = userStore.user.account.accountId;
@@ -523,6 +587,12 @@ function open() {
   }
   show.value = true;
   editor.value.focus()
+  loadSenders().then(() => {
+    // A reply goes out from the address the message was sent to, when that is one of ours
+    if (preferredAccountId && senders.value.some(item => item.accountId === preferredAccountId)) {
+      pickSender(preferredAccountId)
+    }
+  })
 }
 
 function openDraft(draft) {
@@ -536,6 +606,10 @@ function openDraft(draft) {
 const handleKeyDown = (event) => {
   if (event.key === 'Escape') {
     close()
+  }
+  if (show.value && event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
+    event.preventDefault()
+    sendEmail()
   }
 };
 
@@ -620,6 +694,60 @@ function close() {
 .write-select .el-select-dropdown {
   min-width: 0 !important;
 }
+.sender-popper .el-select-dropdown__item {
+  height: auto;
+  line-height: 1.3;
+  padding: 7px 12px;
+}
+
+.sender-popper .sender-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.sender-popper .sender-option-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.sender-popper .sender-option-name {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sender-popper .sender-option-email {
+  color: var(--el-text-color-secondary);
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sender-popper .sender-option-check {
+  color: var(--el-color-primary);
+  flex: 0 0 auto;
+}
+
+.sender-avatar {
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--el-color-primary);
+  background: var(--el-color-primary-light-9);
+}
+
 </style>
 <style scoped lang="scss">
 .send {
@@ -631,15 +759,16 @@ function close() {
   display: flex;
   align-items: center;
   justify-content: center;
+  background: rgba(15, 23, 42, 0.38);
 
   .write-box {
     background: var(--el-bg-color);
     width: min(1367px, calc(100% - 80px));
-    box-shadow: var(--el-box-shadow-light);
+    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.28);
     border: 1px solid var(--el-border-color-light);
     transition: var(--el-transition-duration);
-    padding: 15px;
-    border-radius: 8px;
+    padding: 14px 18px 16px;
+    border-radius: 12px;
     display: grid;
     grid-template-rows: auto 1fr;
     overflow: hidden;
@@ -658,12 +787,83 @@ function close() {
     .title {
       display: flex;
       justify-content: space-between;
-      margin-bottom: 10px;
+      align-items: center;
+      margin-bottom: 14px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--el-border-color-lighter);
+
+      .title-label {
+        margin-left: 8px;
+        font-size: 15px;
+        font-weight: 600;
+        white-space: nowrap;
+        @media (max-width: 560px) {
+          display: none;
+        }
+      }
+
+      .close-btn {
+        all: unset;
+        box-sizing: border-box;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        cursor: pointer;
+        color: var(--el-text-color-secondary);
+        flex: 0 0 auto;
+
+        &:hover {
+          background: var(--el-fill-color);
+          color: var(--el-text-color-primary);
+        }
+
+        &:focus-visible {
+          outline: 2px solid var(--el-color-primary);
+        }
+      }
 
       .title-left {
         align-items: center;
-        display: grid;
-        grid-template-columns: auto auto auto 1fr;
+        display: flex;
+        min-width: 0;
+        gap: 0;
+      }
+
+      .sender-select {
+        margin-left: 10px;
+        width: min(400px, 66vw);
+
+        :deep(.el-select__wrapper) {
+          min-height: 36px;
+          padding: 0 10px;
+          border-radius: 8px;
+          box-shadow: 0 0 0 1px var(--el-border-color-light) inset;
+          background: transparent;
+          font-weight: 600;
+          transition: box-shadow .15s;
+        }
+
+        :deep(.el-select__wrapper:hover) {
+          box-shadow: 0 0 0 1px var(--el-border-color-hover) inset;
+        }
+
+        :deep(.el-select__wrapper.is-focused) {
+          box-shadow: 0 0 0 1px var(--el-color-primary) inset;
+        }
+
+        :deep(.el-select__prefix) {
+          gap: 8px;
+          align-items: center;
+        }
+
+        .sender-from {
+          color: var(--el-text-color-secondary);
+          font-weight: 400;
+          font-size: 13px;
+        }
       }
 
       .title-text {
@@ -706,13 +906,34 @@ function close() {
         display: grid;
         grid-template-columns: auto auto 1fr auto;
 
-        .att-add {
+        align-items: center;
+        padding-top: 12px;
+        border-top: 1px solid var(--el-border-color-lighter);
+
+        .tool-btn {
+          all: unset;
+          box-sizing: border-box;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 36px;
+          height: 36px;
+          border-radius: 8px;
           cursor: pointer;
+          color: var(--el-text-color-regular);
+
+          &:hover {
+            background: var(--el-fill-color);
+            color: var(--el-color-primary);
+          }
+
+          &:focus-visible {
+            outline: 2px solid var(--el-color-primary);
+          }
         }
 
         .att-clear {
-          cursor: pointer;
-          margin-left: 10px;
+          margin-left: 2px;
         }
 
         .att-list {
@@ -734,8 +955,15 @@ function close() {
             height: 32px;
             font-size: 14px;
             padding: 4px 5px;
-            background: var(--light-ill);
-            border-radius: 4px;
+            align-items: center;
+            background: var(--el-fill-color-light);
+            border: 1px solid var(--el-border-color-lighter);
+            border-radius: 6px;
+            .att-remove {
+              cursor: pointer;
+              color: var(--el-text-color-secondary);
+              &:hover { color: var(--el-color-danger); }
+            }
             .att-filename {
               white-space: nowrap;
               text-overflow: ellipsis;

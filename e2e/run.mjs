@@ -74,11 +74,11 @@ await test('search narrows the list and an empty result offers to clear', async 
 })
 
 await test('unread filter returns only unread mail', async () => {
-  await qa.click('.el-radio-button:has-text("Unread")')
+  await qa.click('.filter-btn[title="Unread"]')
   await qa.waitForTimeout(900)
   const n = await qa.locator('.email-row').count()
   expect(n >= 1, 'no unread rows')
-  await qa.click('.el-radio-button:has-text("All")')
+  await qa.click('.filter-btn[title="All"]')
   await qa.waitForTimeout(700)
 })
 
@@ -140,10 +140,10 @@ await test('a read mail can be marked unread and shows up under Unread', async (
   await row.hover()
   await row.locator('.row-action[title="Mark as unread"]').click()
   await qa.waitForTimeout(900)
-  await qa.click('.el-radio-button:has-text("Unread")')
+  await qa.click('.filter-btn[title="Unread"]')
   await qa.waitForTimeout(1000)
   expect(await qa.locator('.email-row', {hasText: 'Very long subject'}).count() === 1, 'not under Unread')
-  await qa.click('.el-radio-button:has-text("All")')
+  await qa.click('.filter-btn[title="All"]')
   await qa.waitForTimeout(700)
 })
 
@@ -221,10 +221,25 @@ await test('the question mark key opens the shortcut list', async () => {
   await qa.waitForTimeout(500)
 })
 
+await test('the compose window lets you pick which address to send from', async () => {
+  await qa.locator('.writer-box').click()
+  await qa.waitForSelector('.sender-select', {timeout: 5000})
+  await qa.locator('.sender-select').click()
+  await qa.waitForTimeout(700)
+  const options = await qa.locator('.sender-popper .el-select-dropdown__item:visible').count()
+  expect(options >= 2, 'only ' + options + ' addresses offered')
+  await qa.locator('.sender-popper .el-select-dropdown__item:visible', {hasText: 'zeta@example2.com'}).click()
+  await qa.waitForTimeout(400)
+  expect((await qa.locator('.sender-select .el-select__placeholder').innerText()).includes('zeta@example2.com'), 'choice not shown')
+  await qa.locator('.send .write-box .close-btn').click()
+  await qa.waitForTimeout(600)
+  expect(await qa.locator('.sender-select').isVisible() === false, 'compose window did not close')
+})
+
 await test('sent page shows the recipient and has no Unread filter', async () => {
   await qa.locator('.el-menu-item:has-text("Sent")').click()
   await qa.waitForTimeout(1200)
-  expect(await qa.locator('.el-radio-button:has-text("Unread")').count() === 0, 'unread filter on sent')
+  expect(await qa.locator('.filter-btn[title="Unread"]').count() === 0, 'unread filter on sent')
 })
 
 await test('no page errors for the normal user', async () => {
@@ -248,6 +263,63 @@ for (const label of ['Analytics', 'All Users', 'All Mail', 'Role', 'System Setti
     expect(admin.problems.length === before, admin.problems.slice(before).join(' | '))
   })
 }
+
+// Pages are kept alive, so earlier dropdowns stay in the DOM hidden; only the open one counts
+function visiblePageSizes(page) {
+  return page.evaluate(() => [...document.querySelectorAll('.el-select-dropdown__item')]
+    .filter(el => el.getClientRects().length > 0).map(el => el.textContent.trim()).filter(text => /\/page$/.test(text)))
+}
+
+async function choosePageSize(page, root, label) {
+  await page.locator(`${root} .el-pagination__sizes .el-select`).first().click()
+  await page.locator('.el-select-dropdown__item:visible', {hasText: label}).click()
+  await page.waitForTimeout(1000)
+}
+
+await test('invite codes are paged and the page size can be 5, 10, 20 or 50', async () => {
+  await admin.locator('.el-menu-item').filter({hasText: /^\s*Invite Code\s*$/}).first().click()
+  await admin.waitForSelector('.code-item', {timeout: 8000})
+  expect(await admin.locator('.code-item').count() === 10, 'default page is not 10')
+  await admin.locator('.page-bar:visible .el-pagination__sizes .el-select').first().click()
+  const offered = await visiblePageSizes(admin)
+  expect(['5/page', '10/page', '20/page', '50/page'].every(o => offered.includes(o)) && offered.length === 4, 'sizes: ' + offered.join(','))
+  await admin.keyboard.press('Escape')
+  await choosePageSize(admin, '.page-bar:visible', '5/page')
+  expect(await admin.locator('.code-item').count() === 5, 'size 5 not applied')
+  const firstOnPage1 = await admin.locator('.code-item .code').first().innerText()
+  await admin.locator('.page-bar:visible .btn-next').first().click()
+  await admin.waitForTimeout(1000)
+  expect(await admin.locator('.code-item').count() === 5, 'page 2 not full')
+  expect((await admin.locator('.code-item .code').first().innerText()) !== firstOnPage1, 'page 2 shows the same codes')
+  await admin.reload()
+  await admin.waitForTimeout(1800)
+  await admin.locator('.el-menu-item').filter({hasText: /^\s*Invite Code\s*$/}).first().click()
+  await admin.waitForSelector('.code-item', {timeout: 8000})
+  expect(await admin.locator('.code-item').count() === 5, 'page size not remembered')
+  await choosePageSize(admin, '.page-bar:visible', '50/page')
+  expect(await admin.locator('.code-item').count() === 23, 'size 50 should show all 23')
+  await admin.evaluate(() => localStorage.removeItem('page-size:reg-key'))
+})
+
+await test('roles are paged', async () => {
+  await admin.locator('.el-menu-item').filter({hasText: /^\s*Role\s*$/}).first().click()
+  await admin.waitForTimeout(1500)
+  await choosePageSize(admin, '.page-bar:visible', '5/page')
+  expect(await admin.locator('.perm-box .el-table__body tr').count() === 5, 'page 1 is not 5 rows')
+  await admin.locator('.page-bar:visible .btn-next').first().click()
+  await admin.waitForTimeout(800)
+  expect(await admin.locator('.perm-box .el-table__body tr').count() === 2, 'page 2 should hold the remaining 2')
+  await admin.evaluate(() => localStorage.removeItem('page-size:role'))
+})
+
+await test('all users offers the same four page sizes', async () => {
+  await admin.locator('.el-menu-item').filter({hasText: /^\s*All Users\s*$/}).first().click()
+  await admin.waitForTimeout(1800)
+  await admin.locator('.pagination:visible .el-pagination__sizes .el-select').first().click()
+  const offered = await visiblePageSizes(admin)
+  expect(offered.join(',') === '5/page,10/page,20/page,50/page', 'sizes: ' + offered.join(','))
+  await admin.keyboard.press('Escape')
+})
 
 await test('delete account is a danger button', async () => {
   await admin.locator('.el-menu-item').filter({hasText: /^\s*Settings\s*$/}).first().click()

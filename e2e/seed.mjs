@@ -52,3 +52,29 @@ for (const c of cases) {
   }
 }
 console.log(`seeded ${cases.length} e2e emails and reset the qa/admin passwords in ${file.slice(0, 8)}...`)
+
+// Enough rows for the paged lists (invite codes, roles, users) to span several pages
+db.prepare("delete from reg_key where code like 'E2E%'").run()
+const regCols = db.prepare('pragma table_info(reg_key)').all().map(c => c.name).filter(n => n !== 'rege_key_id')
+const role = db.prepare('select * from role order by role_id limit 1').get()
+for (let i = 1; i <= 23; i++) {
+  const row = {code: 'E2E' + String(i).padStart(3, '0'), count: 5, role_id: role.role_id, user_id: 1, expire_time: null, create_time: '2026-10-01 00:00:00'}
+  db.prepare(`insert into reg_key (${regCols.join(',')}) values (${regCols.map(() => '?').join(',')})`).run(...regCols.map(k => row[k] ?? null))
+}
+
+db.prepare("delete from role where name like 'E2E role%'").run()
+const roleCols = Object.keys(role).filter(k => k !== 'role_id')
+for (let i = 1; i <= 6; i++) {
+  const row = {...role, name: 'E2E role ' + i, is_default: 0, sort: 10 + i}
+  if ('key' in row) row.key = 'e2e-role-' + i
+  db.prepare(`insert into role (${roleCols.join(',')}) values (${roleCols.map(() => '?').join(',')})`).run(...roleCols.map(k => row[k]))
+}
+
+db.prepare("delete from user where email like 'e2e-user-%'").run()
+const userBase = db.prepare('select * from user where email = ?').get(USERS.qa.email)
+const userCols = Object.keys(userBase).filter(k => k !== 'user_id')
+for (let i = 1; i <= 12; i++) {
+  const row = {...userBase, email: `e2e-user-${String(i).padStart(2, '0')}@example.com`}
+  db.prepare(`insert into user (${userCols.join(',')}) values (${userCols.map(() => '?').join(',')})`).run(...userCols.map(k => row[k]))
+}
+console.log('seeded 23 invite codes, 6 roles and 12 users for paging')

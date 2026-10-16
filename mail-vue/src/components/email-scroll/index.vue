@@ -50,7 +50,7 @@
           </button>
         </div>
         <span class="email-count" v-if="total" :title="$t('shortcutsHint')">{{ $t('emailCount', {total: total}) }}</span>
-        <Icon v-if="showAccountIcon" class="more-icon icon" width="18" height="18" role="button" tabindex="0" :title="$t('accountPanelTip')" :aria-label="$t('accountPanelTip')" @keydown.enter="changeAccountShow" icon="lucide:panel-left"
+        <Icon v-if="showAccountIcon" class="more-icon icon" width="18" height="18" role="button" tabindex="0" :title="$t('accountPanelTip')" :aria-label="$t('accountPanelTip')" @keydown.enter="changeAccountShow" icon="lucide:users"
               @click="changeAccountShow"/>
       </div>
     </div>
@@ -1408,12 +1408,12 @@ function loadData() {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   margin-right: 6px;
   align-self: center;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   background: transparent;
   color: var(--el-text-color-secondary);
   cursor: pointer;
@@ -1470,42 +1470,42 @@ function loadData() {
   }
 }
 
+// Separate icon buttons with no frame; the chosen layout is tinted like the filters
 .layout-switch {
   display: inline-flex;
   align-items: center;
-  gap: 2px;
-  margin-right: 14px;
-  padding: 2px;
-  border-radius: 8px;
-  background: var(--el-fill-color-light);
+  gap: 6px;
+  margin-right: 10px;
   align-self: center;
 }
 
 .layout-btn {
-  width: 28px;
-  height: 26px;
+  width: 32px;
+  height: 32px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  padding: 0;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   background: transparent;
   color: var(--el-text-color-secondary);
   cursor: pointer;
   transition: background-color .15s, color .15s;
 
   &:hover {
+    background: var(--el-fill-color);
     color: var(--el-text-color-primary);
   }
 
   &:focus-visible {
     outline: 2px solid var(--el-color-primary);
+    outline-offset: 1px;
   }
 
   &.on {
-    background: var(--el-bg-color);
+    background: var(--el-color-primary-light-9);
     color: var(--el-color-primary);
-    box-shadow: 0 1px 2px rgba(0, 0, 0, .12);
   }
 }
 
@@ -1935,16 +1935,17 @@ function loadData() {
     color: var(--el-text-color-primary);;
   }
 
+  // One row, vertically centred, however many tools are shown
   .header-right {
-    display: grid;
-    grid-template-columns: auto auto auto;
-    align-items: start;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: nowrap;
     height: 100%;
-    color: var(--el-text-color-primary);;
+    color: var(--el-text-color-primary);
 
     .email-count {
       white-space: nowrap;
-      margin-top: 6px;
     }
   }
 
@@ -1954,7 +1955,6 @@ function loadData() {
   }
 
   .more-icon {
-    margin-top: 8px;
     margin-left: 15px;
   }
 }
