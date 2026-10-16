@@ -2,10 +2,13 @@
   <div class="account-box">
     <div class="head-opt">
       <button v-perm="'account:add'" class="tool-btn tool-add" :title="$t('addAccount')" :aria-label="$t('addAccount')" @click="add">
-        <Icon icon="ion:add" width="20" height="20"/>
+        <Icon icon="lucide:mail-plus" width="18" height="18"/>
       </button>
       <el-select v-model="domainFilter" size="small" class="domain-filter" clearable
                    :placeholder="$t('accDomains')" @visible-change="v => v && ensureAll()">
+          <template #prefix>
+            <Icon icon="lucide:globe" width="15" height="15"/>
+          </template>
           <el-option v-for="d in domainOptions" :key="d.domain" :value="d.domain" :label="`${d.domain} (${d.count})`">
             <span class="domain-dot" :style="{background: domainColor(d.domain)}"></span>
             <span>{{ d.domain }}</span>
@@ -14,14 +17,14 @@
         </el-select>
       <div class="tool-group">
         <button class="tool-btn" :class="{spinning: loading}" :title="$t('toolRefresh')" :aria-label="$t('toolRefresh')" @click="refresh">
-          <Icon icon="ion:refresh-outline" width="18" height="18"/>
+          <Icon icon="lucide:refresh-cw" width="18" height="18"/>
         </button>
         <button class="tool-btn tool-colors" :class="{active: Object.keys(customColors).length > 0}" :title="$t('domainColors')" :aria-label="$t('domainColors')" @click="openColors">
-          <Icon icon="ion:color-palette-outline" width="18" height="18"/>
+          <Icon icon="lucide:palette" width="18" height="18"/>
         </button>
         <el-dropdown trigger="click" @command="changeSort">
           <button class="tool-btn" :aria-label="$t('toolSort')" :class="{active: accountStore.sortBy !== 'default'}" :title="$t('toolSort')">
-            <Icon icon="ion:swap-vertical-outline" width="18" height="18"/>
+            <Icon icon="lucide:arrow-down-wide-narrow" width="18" height="18"/>
           </button>
           <template #dropdown>
             <el-dropdown-menu>
@@ -944,9 +947,8 @@ path[fill="#ffdda1"] {
       }
     }
 
-    &:hover .opt,
-    &.item-choose .opt,
-    .opt:focus-within {
+    // Actions belong to the chosen card only; hovering another card just highlights it
+    &.item-choose .opt {
       display: flex;
     }
 

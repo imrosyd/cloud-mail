@@ -18,11 +18,11 @@
         <el-option :key="-2" :label="$t('deleted')" :value="-2"/>
       </el-select>
       <Icon class="icon" icon="iconoir:search" @click="search" width="20" height="20"/>
-      <Icon class="icon" @click="changeTimeSort" icon="material-symbols-light:timer-arrow-down-outline"
-            v-if="params.timeSort === 1" width="28" height="28"/>
-      <Icon class="icon" @click="changeTimeSort" icon="material-symbols-light:timer-arrow-up-outline" v-else width="28"
+      <Icon class="icon" @click="changeTimeSort" icon="lucide:clock-arrow-down"
+            v-if="params.timeSort === 1" width="20" height="20"/>
+      <Icon class="icon" @click="changeTimeSort" icon="lucide:clock-arrow-up" v-else width="28"
             height="28"/>
-      <Icon class="icon" icon="ion:reload" width="18" height="18" @click="refresh"/>
+      <Icon class="icon" icon="lucide:refresh-cw" width="18" height="18" @click="refresh"/>
       <Icon class="icon" icon="uiw:delete" width="16" height="16" @click="delUser"/>
     </div>
     <el-scrollbar ref="scrollbarRef" class="scrollbar">
@@ -324,12 +324,12 @@
           <el-dropdown-item v-if="rightClickUser.type !== 0">
             <template #default>
               <div class="right-dropdown-item" v-if="rightClickUser.isDel !== 1" @click="setStatus(rightClickUser)" >
-                <Icon icon="ion:reload" v-if="rightClickUser.status" style="margin-left: 1px;margin-right: 1px" width="19" height="19" />
+                <Icon icon="lucide:refresh-cw" v-if="rightClickUser.status" style="margin-left: 1px;margin-right: 1px" width="19" height="19" />
                 <Icon icon="ion:ban-outline" v-else style="margin-left: 1px;margin-right: 1px" width="19" height="19" />
                 <span>{{ setRightStatusName(rightClickUser) }}</span>
               </div>
               <div class="right-dropdown-item" v-else @click="restore(rightClickUser)">
-                <Icon icon="ion:reload" style="margin-left: 1px;margin-right: 1px" width="19" height="19" />
+                <Icon icon="lucide:refresh-cw" style="margin-left: 1px;margin-right: 1px" width="19" height="19" />
                 <span>{{ t('restoreUser') }}</span>
               </div>
             </template>

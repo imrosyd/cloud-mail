@@ -6,7 +6,7 @@
         <Icon icon="iconoir:search" width="16" height="16"/>
       </template>
     </el-input>
-    <el-radio-group v-model="view" size="small" @change="apply">
+    <el-radio-group v-model="view" @change="apply">
       <el-radio-button value="all">{{ $t('filterAll') }}</el-radio-button>
       <el-radio-button v-if="showUnread" value="unread">{{ $t('filterUnread') }}</el-radio-button>
       <el-radio-button value="starred">{{ $t('filterStarred') }}</el-radio-button>
@@ -45,6 +45,15 @@ defineExpose({reset})
   align-items: center;
   flex-wrap: wrap;
   gap: 10px;
+}
+
+/* Mouse clicks leave no focus ring; keyboard focus keeps one */
+:deep(.el-radio-button:focus:not(:focus-visible)) {
+  box-shadow: none;
+}
+
+:deep(.el-radio-button:focus-within:not(:has(:focus-visible))) {
+  box-shadow: none;
 }
 
 .filter-search {

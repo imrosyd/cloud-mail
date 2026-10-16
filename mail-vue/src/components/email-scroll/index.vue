@@ -13,7 +13,7 @@
       <div class="header-left" :style="'padding-left:' + actionLeft">
 
         <slot name="first"></slot>
-        <Icon class="icon reload" icon="ion:reload" width="18" height="18" role="button" tabindex="0"
+        <Icon class="icon reload" icon="lucide:refresh-cw" width="18" height="18" role="button" tabindex="0"
               :title="$t('refreshTip')" :aria-label="$t('refreshTip')" @keydown.enter="refresh" @click="refresh"/>
         <Icon v-perm="'email:delete'" class="icon delete" icon="uiw:delete" width="16" height="16"
               v-if="getSelectedMailsIds().length > 0" role="button" tabindex="0"
@@ -26,8 +26,15 @@
       </div>
 
       <div class="header-right">
+        <div class="layout-switch" v-if="canSplit" role="group" :aria-label="$t('layoutLabel')">
+          <button v-for="opt in layoutOptions" :key="opt.value" type="button" class="layout-btn"
+                  :class="{on: splitMode === opt.value}" :title="$t(opt.label)" :aria-label="$t(opt.label)"
+                  :aria-pressed="splitMode === opt.value" @click="uiStore.listLayout = opt.value">
+            <Icon :icon="opt.icon" width="17" height="17"/>
+          </button>
+        </div>
         <span class="email-count" v-if="total" :title="$t('shortcutsHint')">{{ $t('emailCount', {total: total}) }}</span>
-        <Icon v-if="showAccountIcon" class="more-icon icon" width="16" height="16" icon="akar-icons:dot-grid-fill"
+        <Icon v-if="showAccountIcon" class="more-icon icon" width="18" height="18" role="button" tabindex="0" :title="$t('accountPanelTip')" :aria-label="$t('accountPanelTip')" @keydown.enter="changeAccountShow" icon="lucide:panel-left"
               @click="changeAccountShow"/>
       </div>
     </div>
@@ -36,6 +43,7 @@
       <slot name="filters"></slot>
     </div>
 
+    <div ref="splitRef" class="split-body" :class="['split-' + splitMode, {resizing}]" :style="splitStyle">
     <div ref="scroll" class="scroll">
       <UseVirtualList ref="scrollbarRef"
                         @scroll="onScroll"
@@ -47,12 +55,13 @@
                         :key="keyCount"
         >
           <template #default="{ data: item, index }" >
-            <div :class="['email-row', props.type, {'row-cursor': kbd && item.emailId === cursorId}]"
+            <div :class="['email-row', props.type, {'row-cursor': kbd && item.emailId === cursorId, 'row-selected': splitMode !== 'list' && item.emailId === previewId}]"
                  :data-checked="item.checked"
                  tabindex="0"
                  role="row"
                  :aria-label="(item.name || '') + ', ' + (item.subject || '')"
                  @click="cursorId = item.emailId; jumpDetails(item)"
+                 @dblclick="splitMode !== 'list' && emit('jump', item)"
                  @keydown.enter.self="jumpDetails(item)"
                  @touchstart.passive="swipeStart($event, item)"
                  @touchmove.passive="swipeMove($event)"
@@ -169,6 +178,24 @@
         </slot>
       </div>
     </div>
+    <div v-if="splitMode !== 'list'" class="split-handle" :class="'handle-' + splitMode" role="separator"
+         :aria-orientation="splitMode === 'right' ? 'vertical' : 'horizontal'" tabindex="0" :title="$t('resizeTip')"
+         @pointerdown="startResize" @dblclick="resetSize" @keydown="resizeKey"></div>
+    <aside class="preview-pane" v-if="splitMode !== 'list'">
+      <emailPreview v-if="previewEmail" :email="previewEmail"
+                    :can-reply="['email', 'star'].includes(props.type)"
+                    :can-forward="['email', 'send', 'star'].includes(props.type)"
+                    :can-star="showStar"
+                    @open="email => emit('jump', email)"
+                    @reply="openReply" @forward="openForward"
+                    @star="starChange"
+                    @delete="email => removeWithUndo([email.emailId])"/>
+      <div v-else class="preview-empty">
+        <Icon icon="lucide:mail-open" width="40" height="40"/>
+        <span>{{ $t('selectToRead') }}</span>
+      </div>
+    </aside>
+    </div>
     <el-dropdown
         ref="dropdownRef"
         @visible-change="visibleChange"
@@ -264,6 +291,7 @@
 <script setup>
 import {Icon} from "@iconify/vue";
 import skeletonBlock from "@/components/email-scroll/skeleton/index.vue"
+import emailPreview from "@/components/email-preview/index.vue"
 import {computed, h, onActivated, reactive, ref, watch, nextTick, onMounted, onUnmounted } from "vue";
 import {useEmailStore} from "@/store/email.js";
 import {useUiStore} from "@/store/ui.js";
@@ -348,6 +376,7 @@ let scrollTop = 0
 const latestEmail = ref(null)
 const scrollbarRef = ref(null)
 let reqLock = false
+// True when the list is too narrow for the one-line desktop rows; kept in step with the container queries
 let isMobile = ref(innerWidth < 1367)
 let skeletonRows = 0
 const timePaddingRight = ref('');
@@ -371,11 +400,113 @@ const triggerRef = ref({
   }
 })
 
+const layoutOptions = [
+  {value: 'list', icon: 'lucide:rows-3', label: 'layoutList'},
+  {value: 'right', icon: 'lucide:panel-right', label: 'layoutRight'},
+  {value: 'bottom', icon: 'lucide:panel-bottom', label: 'layoutBottom'},
+]
+const winWide = ref(innerWidth > 1024)
+// Reading next to the list needs room and a list type that opens a message
+const canSplit = computed(() => winWide.value && ['email', 'send', 'star'].includes(props.type))
+const splitMode = computed(() => canSplit.value ? uiStore.listLayout : 'list')
+const previewId = ref(0)
+const previewEmail = computed(() => splitMode.value === 'list' ? null : emailList.find(item => item.emailId === previewId.value) || null)
+let readTimer = null
+
+const splitRef = ref(null)
+const resizing = ref(false)
+const MIN_LIST = 320
+const MIN_PANE = 360
+const MIN_LIST_H = 120
+const MIN_PANE_H = 220
+
+// Grid tracks: list, drag handle, message. Without a saved size the list takes a share of the space
+const splitStyle = computed(() => {
+  if (splitMode.value === 'right') {
+    const size = uiStore.listWidth ? `min(${uiStore.listWidth}px, calc(100% - ${MIN_PANE + 8}px))` : '42%'
+    return {gridTemplateColumns: `minmax(${MIN_LIST}px, ${size}) 8px minmax(0, 1fr)`}
+  }
+  if (splitMode.value === 'bottom') {
+    const size = uiStore.listHeight ? `min(${uiStore.listHeight}px, calc(100% - ${MIN_PANE_H + 8}px))` : '40%'
+    return {gridTemplateRows: `minmax(${MIN_LIST_H}px, ${size}) 8px minmax(0, 1fr)`}
+  }
+  return null
+})
+
+function clampSize(value, min, max) {
+  return Math.round(Math.min(Math.max(value, min), Math.max(min, max)))
+}
+
+function startResize(e) {
+  if (e.button !== 0 || !splitRef.value) return
+  e.preventDefault()
+  const handle = e.currentTarget
+  const rect = splitRef.value.getBoundingClientRect()
+  const horizontal = splitMode.value === 'right'
+  resizing.value = true
+  handle.setPointerCapture(e.pointerId)
+  const move = (ev) => {
+    if (horizontal) {
+      uiStore.listWidth = clampSize(ev.clientX - rect.left, MIN_LIST, rect.width - MIN_PANE - 8)
+    } else {
+      uiStore.listHeight = clampSize(ev.clientY - rect.top, MIN_LIST_H, rect.height - MIN_PANE_H - 8)
+    }
+  }
+  const stop = () => {
+    resizing.value = false
+    handle.removeEventListener('pointermove', move)
+    handle.removeEventListener('pointerup', stop)
+    handle.removeEventListener('pointercancel', stop)
+  }
+  handle.addEventListener('pointermove', move)
+  handle.addEventListener('pointerup', stop)
+  handle.addEventListener('pointercancel', stop)
+}
+
+function resetSize() {
+  if (splitMode.value === 'right') uiStore.listWidth = 0
+  else uiStore.listHeight = 0
+}
+
+function resizeKey(e) {
+  if (!splitRef.value) return
+  const rect = splitRef.value.getBoundingClientRect()
+  const step = e.shiftKey ? 80 : 20
+  if (splitMode.value === 'right' && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
+    const current = uiStore.listWidth || rect.width * 0.42
+    uiStore.listWidth = clampSize(current + (e.key === 'ArrowRight' ? step : -step), MIN_LIST, rect.width - MIN_PANE - 8)
+    e.preventDefault()
+  } else if (splitMode.value === 'bottom' && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+    const current = uiStore.listHeight || rect.height * 0.4
+    uiStore.listHeight = clampSize(current + (e.key === 'ArrowDown' ? step : -step), MIN_LIST_H, rect.height - MIN_PANE_H - 8)
+    e.preventDefault()
+  } else if (e.key === 'Enter' || e.key === 'Home') {
+    resetSize()
+  }
+}
+
+// Opening a message in the pane marks it read once it has stayed selected for a moment,
+// so moving quickly through the list does not read everything on the way
+function selectPreview(email) {
+  previewId.value = email.emailId
+  clearTimeout(readTimer)
+  if (props.showUnread && email.unread === EmailUnreadEnum.UNREAD) {
+    readTimer = setTimeout(() => {
+      if (previewId.value === email.emailId && email.unread === EmailUnreadEnum.UNREAD) {
+        emailRead(email.emailId)
+      }
+    }, 500)
+  }
+}
+
 const {cursorId, kbd} = useListShortcuts({
   getList: () => emailList,
-  onMove: (index) => scrollbarRef.value?.scrollTo(index),
+  onMove: (index) => {
+    scrollbarRef.value?.scrollTo(index)
+    if (splitMode.value !== 'list' && emailList[index]) selectPreview(emailList[index])
+  },
   handlers: {
-    open: (email) => jumpDetails(email),
+    open: (email) => splitMode.value !== 'list' ? emit('jump', email) : jumpDetails(email),
     select: (email) => email.checked = !email.checked,
     star: (email) => props.showStar && starChange(email),
     read: (email) => props.showUnread && email.unread === EmailUnreadEnum.UNREAD && emailRead(email.emailId),
@@ -414,17 +545,32 @@ onMounted(() => {
     })
   }, 1000 * 60);
   window.addEventListener('resize', handleResize)
+  observeList()
 })
 
 onUnmounted(() => {
   clearInterval(timer)
   window.removeEventListener('resize', handleResize)
+  listObserver?.disconnect()
 })
 
 getEmailList()
 
+const COMPACT_BELOW = 850
+let listObserver = null
+
+function observeList() {
+  if (listObserver || !scroll.value || typeof ResizeObserver === 'undefined') return
+  listObserver = new ResizeObserver(entries => {
+    const width = entries[0].contentRect.width
+    if (width > 0) isMobile.value = width < COMPACT_BELOW
+  })
+  listObserver.observe(scroll.value)
+}
+
 function handleResize() {
-  isMobile.value = innerWidth < 1367
+  winWide.value = innerWidth > 1024
+  if (!listObserver) isMobile.value = innerWidth < 1367
 }
 
 function onScroll(e) {
@@ -903,6 +1049,10 @@ function jumpDetails(email) {
       return
     }
   }
+  if (splitMode.value !== 'list') {
+    selectPreview(email)
+    return
+  }
   emit('jump', email)
 }
 
@@ -1027,6 +1177,145 @@ function loadData() {
   height: 100%;
 }
 
+.split-body {
+  min-height: 0;
+  height: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+
+  &.split-right {
+    grid-template-columns: minmax(320px, 42%) 8px minmax(0, 1fr);
+  }
+
+  &.split-bottom {
+    grid-template-rows: minmax(120px, 40%) 8px minmax(0, 1fr);
+  }
+
+  // No text selection or stray hover while the handle is being dragged
+  &.resizing {
+    user-select: none;
+    cursor: col-resize;
+
+    &.split-bottom {
+      cursor: row-resize;
+    }
+  }
+}
+
+.split-handle {
+  position: relative;
+  background: var(--el-fill-color-extra-light);
+  transition: background-color .15s;
+  touch-action: none;
+
+  // The visible line sits in the middle of the wider hit area
+  &::after {
+    content: '';
+    position: absolute;
+    background: var(--el-border-color);
+    border-radius: 2px;
+    transition: background-color .15s;
+  }
+
+  &.handle-right {
+    cursor: col-resize;
+
+    &::after {
+      top: calc(50% - 18px);
+      left: 3px;
+      width: 2px;
+      height: 36px;
+    }
+  }
+
+  &.handle-bottom {
+    cursor: row-resize;
+
+    &::after {
+      left: calc(50% - 18px);
+      top: 3px;
+      height: 2px;
+      width: 36px;
+    }
+  }
+
+  &:hover, &:focus-visible, .resizing > & {
+    background: var(--el-color-primary-light-9);
+
+    &::after {
+      background: var(--el-color-primary);
+    }
+  }
+
+  &:focus-visible {
+    outline: none;
+  }
+}
+
+.preview-pane {
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.preview-empty {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: var(--el-text-color-placeholder);
+}
+
+.layout-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin-right: 14px;
+  padding: 2px;
+  border-radius: 8px;
+  background: var(--el-fill-color-light);
+  align-self: center;
+}
+
+.layout-btn {
+  width: 28px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--el-text-color-secondary);
+  cursor: pointer;
+  transition: background-color .15s, color .15s;
+
+  &:hover {
+    color: var(--el-text-color-primary);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--el-color-primary);
+  }
+
+  &.on {
+    background: var(--el-bg-color);
+    color: var(--el-color-primary);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, .12);
+  }
+}
+
+:deep(.email-row.row-selected) {
+  background-color: var(--choose-account-background);
+
+  &:hover {
+    background-color: var(--choose-account-background);
+  }
+}
+
 .filter-bar {
   padding: 8px 15px;
   box-shadow: var(--header-actions-border);
@@ -1036,6 +1325,9 @@ function loadData() {
   margin: 0;
   height: 100%;
   overflow: hidden;
+  // Rows switch layout by the width of the list itself, not the window,
+  // so a list beside a preview pane gets the compact rows too
+  container: elist / inline-size;
 
   .virtual {
     will-change: scroll-position;
@@ -1099,7 +1391,7 @@ function loadData() {
   position: relative;
   transition: background 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
   height: 48px;
-  @media (max-width: 1366px) {
+  @container elist (max-width: 849px) {
     height: 83px;
   }
 
@@ -1109,7 +1401,7 @@ function loadData() {
   }
   &.all-email {
     height: 65px;
-    @media (max-width: 1366px) {
+    @container elist (max-width: 849px) {
       height: 132px;
     }
   }
@@ -1120,7 +1412,7 @@ function loadData() {
     margin-top: 5px;
     margin-bottom: 2px;
     color: var(--email-scroll-content-color);
-    @media (max-width: 1366px) {
+    @container elist (max-width: 849px) {
       flex-direction: column;
     }
 
@@ -1161,7 +1453,7 @@ function loadData() {
     padding-left: 15px;
     padding-right: 20px;
     justify-content: center;
-    @media (min-width: 1367px) {
+    @container elist (min-width: 850px) {
       justify-content: start;
       height: 100%;
       align-self: start;
@@ -1170,7 +1462,7 @@ function loadData() {
   }
 
   .title-column {
-    @media (max-width: 1366px) {
+    @container elist (max-width: 849px) {
       grid-template-columns: 1fr !important;
       gap: 4px !important;
     }
@@ -1180,10 +1472,10 @@ function loadData() {
     flex: 1;
     display: grid;
     grid-template-columns: 240px 1fr;
-    @media (max-width: 1366px) {
+    @container elist (max-width: 849px) {
       padding-right: 15px;
     }
-    @media (max-width: 1366px) {
+    @container elist (max-width: 849px) {
       grid-template-columns: 1fr;
       gap: 4px;
     }
@@ -1197,7 +1489,7 @@ function loadData() {
         display: flex;
         flex-direction: column;
         align-content: center;
-        @media (max-width: 1366px) {
+        @container elist (max-width: 849px) {
           flex-direction: row;
           gap: 5px;
         }
@@ -1213,7 +1505,7 @@ function loadData() {
           align-items: center;
         }
 
-        @media (min-width: 1366px) {
+        @container elist (min-width: 850px) {
           grid-template-columns: 1fr;
           > span:last-child {
             display: none;
@@ -1238,7 +1530,7 @@ function loadData() {
       .phone-time {
         font-weight: normal;
         font-size: 12px;
-        @media (min-width: 1367px) {
+        @container elist (min-width: 850px) {
           display: none;
         }
       }
@@ -1248,7 +1540,7 @@ function loadData() {
       .text-skeleton-one {
         width: 80%;
         height: 16px;
-        @media (max-width: 1366px) {
+        @container elist (max-width: 849px) {
           width: 40%;
         }
         @media (max-width: 767px) {
@@ -1259,10 +1551,10 @@ function loadData() {
       .text-skeleton-two {
         width: min(300px, 100%);
         height: 16px;
-        @media (min-width: 1367px) {
+        @container elist (min-width: 850px) {
           display: none;
         }
-        @media (max-width: 1366px) {
+        @container elist (max-width: 849px) {
           width: 100%;
         }
       }
@@ -1271,7 +1563,7 @@ function loadData() {
     .email-text {
       display: grid;
       grid-template-columns: auto 1fr;
-      @media (max-width: 1366px) {
+      @container elist (max-width: 849px) {
         grid-template-columns: 1fr;
       }
 
@@ -1282,7 +1574,7 @@ function loadData() {
         overflow: hidden;
         white-space: nowrap;
         min-width: 0;
-        @media (min-width: 1367px) {
+        @container elist (min-width: 850px) {
           padding-left: 5px;
         }
       }
@@ -1313,7 +1605,7 @@ function loadData() {
         text-overflow: ellipsis;
         padding-left: 10px;
         color: var(--email-scroll-content-color);
-        @media (max-width: 1366px) {
+        @container elist (max-width: 849px) {
           padding-left: 0;
           margin-top: 0;
         }
@@ -1329,13 +1621,13 @@ function loadData() {
     display: flex;
     padding-left: 15px;
     align-items: center;
-    @media (max-width: 1366px) {
+    @container elist (max-width: 849px) {
       display: none;
     }
   }
 
   .email-right-skeleton {
-    @media (max-width: 1366px) {
+    @container elist (max-width: 849px) {
       display: none;
     }
   }
@@ -1384,7 +1676,7 @@ function loadData() {
     flex: 0 0 auto;
     color: var(--el-text-color-secondary);
   }
-  @media (min-width: 1367px) {
+  @container elist (min-width: 850px) {
     .email-text {
       grid-template-columns: minmax(120px, 40%) 1fr;
     }
@@ -1400,7 +1692,7 @@ function loadData() {
   width: 40px;
 }
 
-@media (max-width: 1366px) {
+@container elist (max-width: 849px) {
   .pc-star {
     display: none;
   }
@@ -1444,7 +1736,7 @@ function loadData() {
 
   .header-right {
     display: grid;
-    grid-template-columns: auto auto;
+    grid-template-columns: auto auto auto;
     align-items: start;
     height: 100%;
     color: var(--el-text-color-primary);;

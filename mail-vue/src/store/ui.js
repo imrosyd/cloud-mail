@@ -11,6 +11,11 @@ export const useUiStore = defineStore('ui', {
         previewData: {},
         key: 0,
         dark: false,
+        // 'list' | 'right' | 'bottom': where the message is read next to the list
+        listLayout: 'list',
+        // Size of the list beside or above the message, in px; 0 keeps the automatic size
+        listWidth: 0,
+        listHeight: 0,
         asideCount: {
             email: 0,
             send: 0,
@@ -27,6 +32,6 @@ export const useUiStore = defineStore('ui', {
         }
     },
     persist: {
-        pick: ['accountShow','dark'],
+        pick: ['accountShow','dark','listLayout','listWidth','listHeight'],
     },
 })

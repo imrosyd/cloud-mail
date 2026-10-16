@@ -22,11 +22,11 @@
     </template>
     <template #first>
       <Icon class="icon" @click="changeTimeSort" @keydown.enter="changeTimeSort" role="button" tabindex="0"
-            :title="$t('sortTip')" :aria-label="$t('sortTip')" icon="material-symbols-light:timer-arrow-down-outline"
-            v-if="params.timeSort === 0" width="28" height="28"/>
+            :title="$t('sortTip')" :aria-label="$t('sortTip')" icon="lucide:clock-arrow-down"
+            v-if="params.timeSort === 0" width="20" height="20"/>
       <Icon class="icon" @click="changeTimeSort" @keydown.enter="changeTimeSort" role="button" tabindex="0"
-            :title="$t('sortTip')" :aria-label="$t('sortTip')" icon="material-symbols-light:timer-arrow-up-outline" v-else
-            width="28" height="28"/>
+            :title="$t('sortTip')" :aria-label="$t('sortTip')" icon="lucide:clock-arrow-up" v-else
+            width="20" height="20"/>
     </template>
   </emailScroll>
 </template>
