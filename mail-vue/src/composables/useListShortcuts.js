@@ -11,10 +11,15 @@ export function useListShortcuts({getList, onMove, handlers}) {
     const kbd = ref(false)
     let active = true
 
+    // Only fields that take typed text block the shortcuts; a focused checkbox or radio button must not
+    const TEXT_TYPES = ['text', 'search', 'email', 'password', 'number', 'url', 'tel']
+
     function typing(e) {
         const el = e.target
         if (!el || !el.tagName) return false
-        return el.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName)
+        if (el.isContentEditable) return true
+        if (el.tagName === 'INPUT') return TEXT_TYPES.includes((el.type || 'text').toLowerCase())
+        return ['TEXTAREA', 'SELECT'].includes(el.tagName)
     }
 
     function dialogOpen() {

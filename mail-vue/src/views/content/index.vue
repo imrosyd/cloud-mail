@@ -36,18 +36,18 @@
             <el-alert v-if="email.status === 4" :closable="false" :title="$t('complained')" class="email-msg" type="warning" show-icon />
             <el-alert v-if="email.status === 5" :closable="false" :title="$t('delayed')" class="email-msg" type="warning" show-icon />
           </div>
-          <el-scrollbar class="htm-scrollbar" :class="email.attList.length === 0 ? 'bottom-distance' : ''">
+          <el-scrollbar class="htm-scrollbar" :class="!email.attList?.length ? 'bottom-distance' : ''">
             <ShadowHtml class="shadow-html" :html="formatImage(email.content)" v-if="email.content" />
             <pre v-else class="email-text" v-html="linkify(email.text)"></pre>
           </el-scrollbar>
-          <div class="att" v-if="email.attList.length > 0">
+          <div class="att" v-if="email.attList?.length > 0">
             <div class="att-title">
               <span>{{$t('attachments')}}</span>
-              <span>{{$t('attCount',{total: email.attList.length})}}</span>
+              <span>{{$t('attCount',{total: email.attList?.length})}}</span>
             </div>
             <div class="att-box">
 
-              <div class="att-item" v-for="att in email.attList" :key="att.attId">
+              <div class="att-item" v-for="att in email.attList || []" :key="att.attId">
                 <div class="att-icon" @click="showImage(att.key)">
                   <Icon v-bind="getIconByName(att.filename)" />
                 </div>
@@ -130,7 +130,11 @@ function openForward() {
 }
 
 function toMessage(message) {
-  return  message ? JSON.parse(message).message : '';
+  try {
+    return message ? JSON.parse(message).message : '';
+  } catch (e) {
+    return '';
+  }
 }
 
 function formatImage(content) {
@@ -152,8 +156,11 @@ function isImage(filename) {
 }
 
 function formateReceive(recipient) {
-  recipient = JSON.parse(recipient)
-  return recipient.map(item => item.address).join(', ')
+  try {
+    return JSON.parse(recipient).map(item => item.address).join(', ')
+  } catch (e) {
+    return ''
+  }
 }
 
 function changeStar() {

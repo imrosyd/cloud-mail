@@ -445,7 +445,7 @@ function openForward(email) {
 
   setTimeout(() => {
     defValue.value = `
-      ${formatImage(email.content) || `<pre style="font-family: inherit;word-break: break-word;white-space: pre-wrap;margin: 0">${email.text}</pre>`}
+      ${formatImage(email.content) || `<pre style="font-family: inherit;word-break: break-word;white-space: pre-wrap;margin: 0">${plainText(email.text)}</pre>`}
     `
     open()
 
@@ -485,7 +485,7 @@ function openReply(email) {
     </div>
     <blockquote class="mceNonEditable" style="margin: 0 0 0 0.8ex;border-left: 1px solid rgb(204,204,204);padding-left: 1ex;">
       <articl>
-          ${formatImage(email.content) || `<pre style="font-family: inherit;word-break: break-word;white-space: pre-wrap;margin: 0">${email.text}</pre>`}
+          ${formatImage(email.content) || `<pre style="font-family: inherit;word-break: break-word;white-space: pre-wrap;margin: 0">${plainText(email.text)}</pre>`}
       </article>
     </blockquote>`
     open()
@@ -498,6 +498,11 @@ function openReply(email) {
     })
   })
 
+}
+
+// Quoted text part of a reply: mail with no text part has null here, and angle brackets must not become markup
+function plainText(text) {
+  return (text ?? '').replace(/[&<>]/g, ch => ({'&': '&amp;', '<': '&lt;', '>': '&gt;'}[ch]))
 }
 
 function formatImage(content) {
