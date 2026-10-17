@@ -19,5 +19,11 @@ let isPhone = window.innerWidth < 1025
   justify-content: center;
   width: 100%;
   height: 100%;
+
+  @media (min-width: 1025px) {
+    :deep(.el-empty__image) {
+      display: none !important;
+    }
+  }
 }
 </style>

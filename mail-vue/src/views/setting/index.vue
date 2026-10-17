@@ -252,9 +252,9 @@ function submitPwd() {
 </script>
 <style scoped lang="scss">
 .box {
-  max-width: 760px;
+  max-width: 880px;
   margin: 0 auto;
-  padding: 40px 40px;
+  padding: 48px 48px 64px;
 
   @media (max-width: 767px) {
     padding: 30px 30px;
@@ -279,8 +279,8 @@ function submitPwd() {
 
     .item {
       display: grid;
-      grid-template-columns: 50px 1fr;
-      gap: 140px;
+      grid-template-columns: 180px 1fr;
+      gap: 24px;
       position: relative;
       .user-name {
         display: grid;
@@ -307,6 +307,7 @@ function submitPwd() {
       }
 
       @media (max-width: 767px) {
+        grid-template-columns: 50px 1fr;
         gap: 70px;
       }
 
@@ -345,13 +346,20 @@ function submitPwd() {
       align-items: center;
       justify-content: space-between;
       gap: 20px;
-      max-width: 420px;
+      max-width: 560px;
     }
 
     .notify-desc {
       color: var(--regular-text-color);
       font-size: 12px;
       margin-top: 4px;
+    }
+  }
+
+  @media (min-width: 768px) {
+    .container, .language, .notify {
+      padding-bottom: 32px;
+      border-bottom: 1px solid var(--el-border-color-lighter);
     }
   }
 

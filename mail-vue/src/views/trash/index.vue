@@ -9,12 +9,13 @@
                @jump="jumpContent"
   >
     <template #empty>
-      <el-empty :description="$t('trashEmpty')"/>
+      <el-empty :description="$t('trashEmpty')"><template #image><Icon icon="lucide:mail-open" width="40" height="40"/></template></el-empty>
     </template>
   </emailScroll>
 </template>
 
 <script setup>
+import {Icon} from "@iconify/vue";
 import emailScroll from "@/components/email-scroll/index.vue"
 import {emailPurge, emailTrashList} from "@/request/email.js";
 import {useEmailStore} from "@/store/email.js";

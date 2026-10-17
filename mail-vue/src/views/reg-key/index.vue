@@ -57,7 +57,7 @@
         </div>
       </div>
       <div class="empty" v-if="regKeyData.length === 0">
-        <el-empty v-if="!regKeyFirst" :image-size="isMobile ? 120 : null" :description="$t('noCodeFound')"/>
+        <el-empty v-if="!regKeyFirst" :image-size="isMobile ? 120 : null" :description="$t('noCodeFound')"><template #image><Icon icon="lucide:mail-open" width="40" height="40"/></template></el-empty>
       </div>
       <pageBar v-model:page="params.num" v-model:size="params.size" :total="total" storage-key="reg-key" @change="getList(true)"/>
     </el-scrollbar>

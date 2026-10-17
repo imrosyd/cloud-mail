@@ -225,3 +225,15 @@ html[data-theme-to="light"]::view-transition-old(root) {
     background: var(--el-color-primary);
     color: #fff;
 }
+
+/* One empty-state image everywhere: the same mail-open icon as the reader pane */
+.el-empty__image {
+  width: auto !important;
+  height: auto !important;
+  display: flex;
+  justify-content: center;
+  color: var(--el-text-color-placeholder);
+}
+.el-empty__description {
+  margin-top: 10px !important;
+}
