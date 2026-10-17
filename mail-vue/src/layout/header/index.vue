@@ -81,6 +81,7 @@ import {useUserStore} from "@/store/user.js";
 import {useRoute} from "vue-router";
 import {computed, ref} from "vue";
 import {useIsMobile} from "@/composables/useIsMobile.js";
+import {useTheme} from "@/composables/useTheme.js";
 import {useSettingStore} from "@/store/setting.js";
 import {hasPerm} from "@/perm/perm.js"
 import {useI18n} from "vue-i18n";
@@ -94,6 +95,7 @@ const settingStore = useSettingStore();
 const userStore = useUserStore();
 const uiStore = useUiStore();
 const isMobile = useIsMobile()
+const {toggleTheme: openDark} = useTheme()
 const logoutLoading = ref(false)
 const userInfoShow = ref(false)
 const userinfoRef = ref({})
@@ -174,47 +176,6 @@ async function copyEmail(email) {
 function changeLang(lang) {
   setExtend(lang === 'en' ? 'en' : 'zh-cn')
   settingStore.lang = lang
-}
-
-function openDark(e) {
-
-  const nextIsDark = !uiStore.dark
-  const root = document.documentElement
-
-  if (!document.startViewTransition) {
-    switchDark(nextIsDark, root);
-    return
-  }
-
-  const x = e.clientX
-  const y = e.clientY
-
-  const maxX = Math.max(x, window.innerWidth - x)
-  const maxY = Math.max(y, window.innerHeight - y)
-  const endRadius = Math.hypot(maxX, maxY)
-
-      // Mark transition target for CSS selector
-  root.setAttribute('data-theme-to', nextIsDark ? 'dark' : 'light')
-  root.style.setProperty('--vt-x', `${x}px`)
-  root.style.setProperty('--vt-y', `${y}px`)
-  root.style.setProperty('--vt-end-radius', `${endRadius + 10}px`)
-
-  const transition = document.startViewTransition(() => {
-    switchDark(nextIsDark, root);
-  })
-
-  transition.finished.finally(() => {
-      // Clear marker
-    root.removeAttribute('data-theme-to')
-  })
-}
-
-function switchDark(nextIsDark, root) {
-  root.setAttribute('class', nextIsDark ? 'dark' : '')
-  const metaTag = document.getElementById('theme-color-meta');
-  const isMobile =  !window.matchMedia("(pointer: fine) and (hover: hover)").matches;
-  metaTag.setAttribute('content', nextIsDark ? (isMobile ? '#141414' : '#000000') : (isMobile ? '#FFFFFF' : '#F1F1F1'));
-  uiStore.dark = nextIsDark
 }
 
 function openSend() {

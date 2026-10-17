@@ -144,9 +144,15 @@
         <el-button class="btn" type="primary" @click="bind" :loading="bindLoading">{{ $t('bind') }}</el-button>
       </div>
     </el-dialog>
-    <a v-show="settingStore.settings.projectLink" class="github" href="https://github.com/imrosyd/cloud-mail">
+    <div class="corner-actions">
+      <button type="button" class="corner-btn theme-btn" :title="uiStore.dark ? $t('lightMode') : $t('darkMode')"
+              :aria-label="uiStore.dark ? $t('lightMode') : $t('darkMode')" @click="toggleTheme($event)">
+        <Icon :icon="uiStore.dark ? 'mingcute:sun-fill' : 'solar:moon-linear'" width="20" height="20"/>
+      </button>
+          <a v-show="settingStore.settings.projectLink" class="corner-btn github" href="https://github.com/imrosyd/cloud-mail">
       <Icon icon="mingcute:github-line" color="#1890ff" width="20" height="20" />
     </a>
+    </div>
   </div>
 </template>
 
@@ -166,9 +172,11 @@ import {cvtR2Url} from "@/utils/convert.js";
 import {loginUserInfo} from "@/request/my.js";
 import {permsToRouter} from "@/perm/perm.js";
 import {useI18n} from "vue-i18n";
+import {useTheme} from "@/composables/useTheme.js";
 import {oauthBindUser, oauthLinuxDoLogin} from "@/request/ouath.js";
 
 const {t} = useI18n();
+const {toggleTheme} = useTheme();
 const accountStore = useAccountStore();
 const userStore = useUserStore();
 const uiStore = useUiStore();
@@ -787,21 +795,38 @@ html.dark #login-box .brand-logo {
   top: 6px;
 }
 
-.github {
+.corner-actions {
   position: fixed;
+  bottom: 10px;
+  right: 10px;
+  z-index: 1000;
+  display: flex;
+  gap: 10px;
+}
+
+.corner-btn {
   width: 35px;
   height: 35px;
+  padding: 0;
   display: flex;
   justify-content: center;
   align-items: center;
   border-radius: 50%;
   background: var(--el-bg-color);
-  bottom: 10px;
-  right: 10px;
-  z-index: 1000;
+  color: #1890ff;
   border: 1px solid var(--el-border-color-light);
   box-shadow: var(--el-box-shadow-light);
   cursor: pointer;
+  transition: transform .15s;
+
+  &:hover {
+    transform: translateY(-1px);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--el-color-primary);
+    outline-offset: 2px;
+  }
 }
 
 :deep(.el-input-group__append) {
