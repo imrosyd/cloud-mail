@@ -1,3 +1,33 @@
+# Dependencies
+node_modules
+mail-vue/node_modules
+mail-worker/node_modules
+
+# Build output (the frontend builds into mail-worker/dist)
+dist
+dist-ssr
+mail-vue/dist
+mail-worker/dist
+
+# Cloudflare / wrangler local state and secrets
+.wrangler
+.dev.vars
+.dev.vars.*
+.env
+.env.*
+!mail-vue/.env.dev
+!mail-vue/.env.release
+!mail-vue/.env.remote
+*.local
+
+# Local database dumps and backups
+*.sqlite
+*.sqlite3
+*.db
+backup*.sql
+*.bak
+
+# Logs
 logs
 *.log
 npm-debug.log*
@@ -6,22 +36,30 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist-ssr
-*.local
-dist
+# Test output
+coverage
+playwright-report
+test-results
 
+# Local process manager config (pm2)
+ecosystem.config.cjs
+
+# Python
+.venv
+__pycache__
+*.pyc
+
+# Editors and OS
 .vscode/*
 !.vscode/extensions.json
 .idea
 .DS_Store
+Thumbs.db
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
 
-mail-vue/node_modules
-mail-vue/dist
-.wrangler
-.venv
+# Claude Code local settings
+.claude
