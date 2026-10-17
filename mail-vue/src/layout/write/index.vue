@@ -753,6 +753,13 @@ function close() {
 
 </script>
 <style>
+/* The dimmer behind the window is slate-blue in light mode; on the dark theme that tints the app navy, so use plain black */
+html.dark .send {
+  background: rgba(0, 0, 0, 0.55);
+}
+html.dark .send .write-box {
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+}
 .write-select .el-select-dropdown__list {
   padding: 4px 4px !important;
 }
