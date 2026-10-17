@@ -50,8 +50,11 @@
           </button>
         </div>
         <span class="email-count" v-if="total" :title="$t('shortcutsHint')">{{ $t('emailCount', {total: total}) }}</span>
-        <Icon v-if="showAccountIcon" class="more-icon icon" width="18" height="18" role="button" tabindex="0" :title="$t('accountPanelTip')" :aria-label="$t('accountPanelTip')" @keydown.enter="changeAccountShow" icon="lucide:users"
-              @click="changeAccountShow"/>
+        <button v-if="showAccountIcon" type="button" class="layout-btn account-toggle" :class="{on: uiStore.accountShow}"
+                :title="$t('accountPanelTip')" :aria-label="$t('accountPanelTip')" :aria-pressed="uiStore.accountShow"
+                @click="changeAccountShow">
+          <Icon icon="lucide:users" width="18" height="18"/>
+        </button>
       </div>
     </div>
 
@@ -1418,7 +1421,6 @@ function loadData() {
   cursor: pointer;
 
   &:hover, &:focus-visible {
-    background: var(--el-fill-color);
     color: var(--el-text-color-primary);
   }
 }
@@ -1493,7 +1495,6 @@ function loadData() {
   transition: background-color .15s, color .15s;
 
   &:hover {
-    background: var(--el-fill-color);
     color: var(--el-text-color-primary);
   }
 
@@ -1506,6 +1507,11 @@ function loadData() {
     background: var(--el-color-primary-light-9);
     color: var(--el-color-primary);
   }
+}
+
+.account-toggle {
+  align-self: center;
+  margin-left: 8px;
 }
 
 :deep(.email-row.row-selected) {
