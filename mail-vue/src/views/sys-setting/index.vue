@@ -5,105 +5,124 @@
     </div>
     <el-scrollbar class="scroll" v-if="!firstLoading">
       <div class="scroll-body">
-        <div class="card-grid">
-          <!-- Website Settings Card -->
+        <div class="settings-toolbar">
+          <el-input v-model="query" clearable :placeholder="$t('searchSettings')" :aria-label="$t('searchSettings')">
+            <template #prefix>
+              <Icon icon="lucide:search" width="16" height="16"/>
+            </template>
+          </el-input>
+        </div>
+        <div class="card-grid" ref="gridRef">
           <div class="settings-card">
             <div class="card-title">{{ $t('websiteSetting') }}</div>
             <div class="card-content">
               <div class="setting-item">
-                <div><span>{{ $t('websiteReg') }}</span></div>
-                <div>
+                <div class="item-main">
+                  <span class="item-label">{{ $t('websiteReg') }}</span>
+            <span class="item-desc">{{ $t('descRegister') }}</span>
+                </div>
+                <div class="item-control">
                   <el-switch @change="change" :before-change="beforeChange" :active-value="0" :inactive-value="1"
                              v-model="setting.register"/>
                 </div>
               </div>
               <div class="setting-item">
-                <div><span>{{ $t('loginDomain') }}</span></div>
-                <div>
+                <div class="item-main">
+                  <span class="item-label">{{ $t('loginDomain') }}</span>
+            <span class="item-desc">{{ $t('descLoginDomain') }}</span>
+                </div>
+                <div class="item-control">
                   <el-switch @change="change" :before-change="beforeChange" :active-value="1" :inactive-value="0"
                              v-model="setting.loginDomain"/>
                 </div>
               </div>
               <div class="setting-item">
-                <div><span>{{ $t('regKey') }}</span></div>
-                <div>
-                  <el-select
-                      @change="change"
-                      :style="`width: ${ locale === 'en' ?  100 : 80 }px;`"
-                      v-model="setting.regKey"
-                      placeholder="Select"
-                  >
-                    <el-option
-                        v-for="item in regKeyOptions"
-                        :key="item.value"
-                        :label="item.label"
-                        :value="item.value"
-                    />
+                <div class="item-main">
+                  <span class="item-label">{{ $t('regKey') }}</span>
+            <span class="item-desc">{{ $t('descRegKey') }}</span>
+                </div>
+                <div class="item-control">
+                  <el-select class="ctl-select " @change="change" v-model="setting.regKey" placeholder="Select">
+                    <el-option v-for="item in regKeyOptions" :key="item.value" :label="item.label" :value="item.value"/>
                   </el-select>
                 </div>
               </div>
               <div class="setting-item">
-                <div><span>{{ $t('addAccount') }}</span></div>
-                <div>
+                <div class="item-main">
+                  <span class="item-label">{{ $t('addAccount') }}</span>
+            <span class="item-desc">{{ $t('descAddAccount') }}</span>
+                </div>
+                <div class="item-control">
                   <el-switch @change="change" :before-change="beforeChange" :active-value="0" :inactive-value="1"
                              v-model="setting.addEmail"/>
                 </div>
               </div>
               <div class="setting-item">
-                <div>
-                  <span>{{ $t('multipleEmail') }}</span>
-                  <el-tooltip effect="dark" :content="$t('multipleEmailDesc')">
-                    <Icon class="warning" icon="fe:warning" width="18" height="18"/>
-                  </el-tooltip>
+                <div class="item-main">
+                  <span class="item-label">{{ $t('multipleEmail') }}</span>
+            <span class="item-desc">{{ $t('multipleEmailDesc') }}</span>
                 </div>
-                <div>
+                <div class="item-control">
                   <el-switch @change="change" :before-change="beforeChange" :active-value="0" :inactive-value="1"
                              v-model="setting.manyEmail"/>
                 </div>
               </div>
               <div class="setting-item">
-                <div>
-                  <span>{{ $t('emailPrefix') }}</span>
+                <div class="item-main">
+                  <span class="item-label">{{ $t('emailPrefix') }}</span>
+            <span class="item-desc">{{ $t('descEmailPrefix') }}</span>
                 </div>
-                <div class="forward">
-                  <el-button class="opt-button" size="small" type="primary" @click="openEmailPrefix">
-                    <Icon icon="fluent:settings-48-regular" width="18" height="18"/>
+                <div class="item-control">
+                  <span class="item-sum">{{ prefixSummary }}</span>
+                  <el-button class="opt-button" size="small" type="primary" :aria-label="$t('emailPrefix')" :title="$t('emailPrefix')" @click="openEmailPrefix">
+                    <Icon icon="fluent:settings-48-regular" width="16" height="16"/>
                   </el-button>
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- Personalization Settings Card -->
           <div class="settings-card">
             <div class="card-title">{{ $t('customization') }}</div>
             <div class="card-content">
               <div class="setting-item">
-                <div class="title-item"><span>{{ $t('websiteTitle') }}</span></div>
-                <div class="email-title">
-                  <span>{{ setting.title }}</span>
-                  <el-button class="opt-button" size="small" type="primary" @click="editTitleShow = true">
+                <div class="item-main">
+                  <span class="item-label">{{ $t('websiteTitle') }}</span>
+            <span class="item-desc">{{ $t('descTitle') }}</span>
+                </div>
+                <div class="item-control">
+                  <span class="item-sum">{{ setting.title }}</span>
+                  <el-button class="opt-button" size="small" type="primary" :aria-label="$t('websiteTitle')" :title="$t('websiteTitle')" @click="editTitleShow = true">
                     <Icon icon="lsicon:edit-outline" width="16" height="16"/>
                   </el-button>
                 </div>
               </div>
               <div class="setting-item">
-                <div class="title-item"><span>{{ $t('loginBoxOpacity') }}</span></div>
-                <div>
-                  <el-input-number size="small" v-model="loginOpacity" @change="opacityChange" :precision="2"
+                <div class="item-main">
+                  <span class="item-label">{{ $t('loginBoxOpacity') }}</span>
+            <span class="item-desc">{{ $t('descOpacity') }}</span>
+                </div>
+                <div class="item-control">
+                  <el-input-number class="ctl-number" size="small" v-model="loginOpacity" @change="opacityChange" :precision="2"
                                    :step="0.01" :max="1" :min="0"/>
                 </div>
               </div>
               <div class="setting-item">
-                <div class="title-item"><span>{{ $t('backgroundDarken') }}</span></div>
-                <div>
-                  <el-input-number size="small" v-model="loginDarkenFactor" @change="darkenChange" :precision="2"
+                <div class="item-main">
+                  <span class="item-label">{{ $t('backgroundDarken') }}</span>
+            <span class="item-desc">{{ $t('descDim') }}</span>
+                </div>
+                <div class="item-control">
+                  <el-input-number class="ctl-number" size="small" v-model="loginDarkenFactor" @change="darkenChange" :precision="2"
                                    :step="0.01" :max="1" :min="0"/>
                 </div>
               </div>
               <div class="setting-item personalized">
-                <div><span>{{ $t('loginBackground') }}</span></div>
-                <div>
+                <div class="item-main">
+                  <span class="item-label">{{ $t('loginBackground') }}</span>
+            <span class="item-desc">{{ $t('descBackground') }}</span>
+                </div>
+                <div class="item-control">
                   <el-image
                       class="background"
                       :src="cvtR2Url(setting.background)"
@@ -118,231 +137,13 @@
                     </template>
                   </el-image>
                   <div class="background-btn">
-                    <el-button class="opt-button" size="small" type="primary" @click="openSetBackground">
-                      <Icon icon="lsicon:edit-outline" width="16" height="16"/>
-                    </el-button>
-                    <el-button class="opt-button" size="small" type="primary" @click="delBackground">
-                      <Icon icon="material-symbols:delete-outline-rounded" width="16" height="16"/>
-                    </el-button>
+                  <el-button class="opt-button" size="small" type="primary" :aria-label="$t('loginBackground')" :title="$t('loginBackground')" @click="openSetBackground">
+                    <Icon icon="lsicon:edit-outline" width="16" height="16"/>
+                  </el-button>
+                  <el-button class="opt-button" size="small" type="primary" :aria-label="$t('delete')" :title="$t('delete')" @click="delBackground">
+                    <Icon icon="material-symbols:delete-outline-rounded" width="16" height="16"/>
+                  </el-button>
                   </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Email Sending Settings Card -->
-          <div class="settings-card">
-            <div class="card-title">{{ $t('emailSetting') }}</div>
-            <div class="card-content">
-              <div class="setting-item">
-                <div><span>{{ $t('receiveEmail') }}</span></div>
-                <div>
-                  <el-switch @change="change" :before-change="beforeChange" :active-value="0" :inactive-value="1"
-                             v-model="setting.receive"/>
-                </div>
-              </div>
-              <div class="setting-item">
-                <div>
-                  <span>{{ $t('autoRefresh') }}</span>
-                  <el-tooltip effect="dark" :content="$t('autoRefreshDesc')">
-                    <Icon class="warning" icon="fe:warning" width="18" height="18"/>
-                  </el-tooltip>
-                </div>
-                <div>
-                  <el-select
-                      @change="change"
-                      :style="`width: ${ locale === 'en' ? 100 : 80 }px;`"
-                      v-model="setting.autoRefresh"
-                      placeholder="Select"
-                  >
-                    <el-option
-                        v-for="item in authRefreshOptions"
-                        :key="item.value"
-                        :label="item.label"
-                        :value="item.value"
-                    />
-                  </el-select>
-                </div>
-              </div>
-              <div class="setting-item">
-                <div><span>{{ $t('sendEmail') }}</span></div>
-                <div>
-                  <el-switch @change="change" :before-change="beforeChange" :active-value="0" :inactive-value="1"
-                             v-model="setting.send"/>
-                </div>
-              </div>
-              <div class="setting-item">
-                <div>
-                  <span>{{ $t('noRecipientTitle') }}</span>
-                  <el-tooltip effect="dark" :content="$t('noRecipientDesc')">
-                    <Icon class="warning" icon="fe:warning" width="18" height="18"/>
-                  </el-tooltip>
-                </div>
-                <div>
-                  <el-switch @change="change" :before-change="beforeChange" :active-value="0" :inactive-value="1"
-                             v-model="setting.noRecipient"/>
-                </div>
-              </div>
-              <div class="setting-item">
-                <div><span>{{ setting.hasCfEmail ? $t('cloudflareEmailSending') : $t('resendToken') }}</span></div>
-                <div v-if="setting.hasCfEmail">
-                  <span>{{ $t('enabled') }}</span>
-                </div>
-                <div v-else>
-                  <el-button class="opt-button" style="margin-top: 0" @click="openResendList" size="small"
-                             type="primary">
-                    <Icon icon="ic:round-list" width="18" height="18"/>
-                  </el-button>
-                  <el-button class="opt-button" style="margin-top: 0" @click="openResendForm" size="small"
-                             type="primary">
-                    <Icon icon="material-symbols:add-rounded" width="16" height="16"/>
-                  </el-button>
-                </div>
-              </div>
-              <div class="setting-item">
-                <div><span>{{ $t('blackList') }}</span></div>
-                <div>
-                  <el-button class="opt-button" style="margin-top: 0" @click="openBlackListForm" size="small"
-                             type="primary">
-                    <Icon icon="fluent:settings-48-regular" width="16" height="16"/>
-                  </el-button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Object Storage Card -->
-          <div class="settings-card">
-            <div class="card-title">{{ $t('oss') }}</div>
-            <div class="card-content">
-              <div class="r2domain-item">
-                <div>
-                  <span>{{ $t('osDomain') }}</span>
-                  <el-tooltip effect="dark" :content="$t('ossDomainDesc')">
-                    <Icon class="warning" icon="fe:warning" width="18" height="18"/>
-                  </el-tooltip>
-                </div>
-                <div class="r2domain">
-                  <span>{{ setting.r2Domain || '' }}</span>
-                  <el-button class="opt-button" size="small" type="primary" @click="r2DomainShow = true">
-                    <Icon icon="lsicon:edit-outline" width="16" height="16"/>
-                  </el-button>
-                </div>
-              </div>
-              <div class="setting-item">
-                <div>
-                  <span>{{ $t('s3Configuration') }}</span>
-                </div>
-                <div class="r2domain">
-                  <el-button class="opt-button" size="small" type="primary" @click="addS3Show = true">
-                    <Icon icon="fluent:settings-48-regular" width="16" height="16"/>
-                  </el-button>
-                </div>
-              </div>
-              <div class="setting-item">
-                <div>
-                  <span>{{ $t('storageType') }}</span>
-                </div>
-                <div class="r2domain">
-                  <div class="storage-type">
-                    <el-tag>{{ setting.storageType }}</el-tag>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="settings-card">
-            <div class="card-title">{{ $t('emailPush') }}</div>
-            <div class="card-content">
-              <div class="setting-item">
-                <div><span>{{ $t('tgBot') }}</span></div>
-                <div class="forward">
-                  <span>{{ setting.tgBotStatus === 0 ? $t('enabled') : $t('disabled') }}</span>
-                  <el-button class="opt-button" size="small" type="primary" @click="openTgSetting">
-                    <Icon icon="fluent:settings-48-regular" width="18" height="18"/>
-                  </el-button>
-                </div>
-              </div>
-              <div class="setting-item">
-                <div><span>{{ $t('otherEmail') }}</span></div>
-                <div class="forward">
-                  <span>{{ setting.forwardStatus === 0 ? $t('enabled') : $t('disabled') }}</span>
-                  <el-button class="opt-button" size="small" type="primary" @click="openThirdEmailSetting">
-                    <Icon icon="fluent:settings-48-regular" width="18" height="18"/>
-                  </el-button>
-                </div>
-              </div>
-              <div class="setting-item">
-                <div><span>{{ $t('forwardingRules') }}</span></div>
-                <div class="forward">
-                  <span>{{ setting.ruleType === 0 ? $t('forwardAll') : $t('rules') }}</span>
-                  <el-button class="opt-button" size="small" type="primary" @click="openForwardRules">
-                    <Icon icon="fluent:settings-48-regular" width="18" height="18"/>
-                  </el-button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Turnstile Verification Card -->
-          <div class="settings-card">
-            <div class="card-title">{{ $t('turnstileSetting') }}</div>
-            <div class="card-content">
-              <div class="setting-item">
-                <div><span>{{ $t('signUpVerification') }}</span></div>
-                <div>
-                  <el-button class="opt-button" size="small" type="primary" @click="openRegVerifyCount">
-                    <Icon icon="fluent:settings-48-regular" width="18" height="18"/>
-                  </el-button>
-                  <el-select
-                      @change="change"
-                      :style="`width: ${ locale === 'en' ? 100 : 80 }px;`"
-                      v-model="setting.registerVerify"
-                      placeholder="Select"
-                      class="bot-verify-select"
-                  >
-                    <el-option key="1" :value="0" :label="$t('enable')"/>
-                    <el-option key="1" :value="1" :label="$t('disable')"/>
-                    <el-option key="1" :value="2" :label="$t('rulesVerify')"/>
-                  </el-select>
-                </div>
-              </div>
-              <div class="setting-item">
-                <div><span>{{ $t('addEmailVerification') }}</span></div>
-                <div>
-                  <el-button class="opt-button" size="small" type="primary" @click="openAddVerifyCount">
-                    <Icon icon="fluent:settings-48-regular" width="18" height="18"/>
-                  </el-button>
-                  <el-select
-                      @change="change"
-                      :style="`width: ${ locale === 'en' ? 100 : 80 }px;`"
-                      v-model="setting.addEmailVerify"
-                      placeholder="Select"
-                      class="bot-verify-select"
-                  >
-                    <el-option key="1" :value="0" :label="$t('enable')"/>
-                    <el-option key="1" :value="1" :label="$t('disable')"/>
-                    <el-option key="1" :value="2" :label="$t('rulesVerify')"/>
-                  </el-select>
-                </div>
-              </div>
-              <div class="setting-item">
-                <div><span>Site Key</span></div>
-                <div class="bot-verify">
-                  <span>{{ setting.siteKey }}</span>
-                  <el-button class="opt-button" size="small" type="primary" @click="turnstileShow = true">
-                    <Icon icon="lsicon:edit-outline" width="16" height="16"/>
-                  </el-button>
-                </div>
-              </div>
-              <div class="setting-item">
-                <div><span>Secret Key</span></div>
-                <div class="bot-verify">
-                  <span> {{ setting.secretKey }} </span>
-                  <el-button class="opt-button" size="small" type="primary" @click="turnstileShow = true">
-                    <Icon icon="lsicon:edit-outline" width="16" height="16"/>
-                  </el-button>
                 </div>
               </div>
             </div>
@@ -352,19 +153,25 @@
             <div class="card-title">{{ $t('noticeTitle') }}</div>
             <div class="card-content">
               <div class="setting-item">
-                <div><span>{{ $t('noticePopup') }}</span></div>
-                <div class="forward">
-                  <span>{{ setting.notice === 0 ? $t('enabled') : $t('disabled') }}</span>
-                  <el-button class="opt-button" size="small" type="primary" @click="openNoticePopupSetting">
-                    <Icon icon="fluent:settings-48-regular" width="18" height="18"/>
+                <div class="item-main">
+                  <span class="item-label">{{ $t('noticePopup') }}</span>
+            <span class="item-desc">{{ $t('descNotice') }}</span>
+                </div>
+                <div class="item-control">
+                  <span class="item-sum" :class="{on: setting.notice === 0}">{{ setting.notice === 0 ? $t('enabled') : $t('disabled') }}</span>
+                  <el-button class="opt-button" size="small" type="primary" :aria-label="$t('noticePopup')" :title="$t('noticePopup')" @click="openNoticePopupSetting">
+                    <Icon icon="fluent:settings-48-regular" width="16" height="16"/>
                   </el-button>
                 </div>
               </div>
               <div class="setting-item">
-                <div><span>{{ $t('popUp') }}</span></div>
-                <div class="forward">
-                  <el-button class="opt-button" size="small" type="primary" @click="openNoticePopup">
-                    <Icon icon="mynaui:click-solid" width="18" height="18"/>
+                <div class="item-main">
+                  <span class="item-label">{{ $t('popUp') }}</span>
+            <span class="item-desc">{{ $t('descPopup') }}</span>
+                </div>
+                <div class="item-control">
+                  <el-button class="opt-button" size="small" type="primary" :aria-label="$t('popUp')" :title="$t('popUp')" @click="openNoticePopup">
+                    <Icon icon="mynaui:click-solid" width="16" height="16"/>
                   </el-button>
                 </div>
               </div>
@@ -375,23 +182,257 @@
             <div class="card-title">Workers AI</div>
             <div class="card-content">
               <div class="setting-item">
-                <div><span>{{ $t('codeRecognition') }}</span></div>
-                <div>
+                <div class="item-main">
+                  <span class="item-label">{{ $t('codeRecognition') }}</span>
+            <span class="item-desc">{{ $t('descAi') }}</span>
+                </div>
+                <div class="item-control">
                   <el-switch @change="changeField('aiCode', $event)" :before-change="beforeChange" :active-value="0" :inactive-value="1"
                              v-model="setting.aiCode"/>
                 </div>
               </div>
               <div class="setting-item">
-                <div><span>{{ $t('codeRecognitionRules') }}</span></div>
-                <div class="forward">
-                  <el-button class="opt-button" size="small" type="primary" @click="openAiCodeFilter">
-                    <Icon icon="fluent:settings-48-regular" width="18" height="18"/>
+                <div class="item-main">
+                  <span class="item-label">{{ $t('codeRecognitionRules') }}</span>
+            <span class="item-desc">{{ $t('descAiRules') }}</span>
+                </div>
+                <div class="item-control">
+                  <span class="item-sum">{{ aiRulesSummary }}</span>
+                  <el-button class="opt-button" size="small" type="primary" :aria-label="$t('codeRecognitionRules')" :title="$t('codeRecognitionRules')" @click="openAiCodeFilter">
+                    <Icon icon="fluent:settings-48-regular" width="16" height="16"/>
+                  </el-button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="settings-card">
+            <div class="card-title">{{ $t('emailSetting') }}</div>
+            <div class="card-content">
+              <div class="setting-item">
+                <div class="item-main">
+                  <span class="item-label">{{ $t('receiveEmail') }}</span>
+            <span class="item-desc">{{ $t('descReceive') }}</span>
+                </div>
+                <div class="item-control">
+                  <el-switch @change="change" :before-change="() => guardOff('receive')" :active-value="0" :inactive-value="1"
+                             v-model="setting.receive"/>
+                </div>
+              </div>
+              <div class="setting-item">
+                <div class="item-main">
+                  <span class="item-label">{{ $t('autoRefresh') }}</span>
+            <span class="item-desc">{{ $t('autoRefreshDesc') }}</span>
+                </div>
+                <div class="item-control">
+                  <el-select class="ctl-select " @change="change" v-model="setting.autoRefresh" placeholder="Select">
+                    <el-option v-for="item in authRefreshOptions" :key="item.value" :label="item.label" :value="item.value"/>
+                  </el-select>
+                </div>
+              </div>
+              <div class="setting-item">
+                <div class="item-main">
+                  <span class="item-label">{{ $t('sendEmail') }}</span>
+            <span class="item-desc">{{ $t('descSend') }}</span>
+                </div>
+                <div class="item-control">
+                  <el-switch @change="change" :before-change="() => guardOff('send')" :active-value="0" :inactive-value="1"
+                             v-model="setting.send"/>
+                </div>
+              </div>
+              <div class="setting-item">
+                <div class="item-main">
+                  <span class="item-label">{{ $t('noRecipientTitle') }}</span>
+            <span class="item-desc">{{ $t('noRecipientDesc') }}</span>
+                </div>
+                <div class="item-control">
+                  <el-switch @change="change" :before-change="beforeChange" :active-value="0" :inactive-value="1"
+                             v-model="setting.noRecipient"/>
+                </div>
+              </div>
+              <div class="setting-item" v-if="setting.hasCfEmail">
+                <div class="item-main">
+                  <span class="item-label">{{ $t('cloudflareEmailSending') }}</span>
+                  <span class="item-desc">{{ $t('descCfEmail') }}</span>
+                </div>
+                <div class="item-control">
+                  <span class="item-sum" :class="'on'">{{ $t('enabled') }}</span>
+                </div>
+              </div>
+              <div class="setting-item" v-else>
+                <div class="item-main">
+                  <span class="item-label">{{ $t('resendToken') }}</span>
+                  <span class="item-desc">{{ $t('descResend') }}</span>
+                </div>
+                <div class="item-control">
+                  <span class="item-sum">{{ resendSummary }}</span>
+                  <el-button class="opt-button" size="small" type="primary" :aria-label="$t('resendToken')" :title="$t('resendToken')" @click="openResendList">
+                    <Icon icon="ic:round-list" width="18" height="18"/>
+                  </el-button>
+                  <el-button class="opt-button" size="small" type="primary" :aria-label="$t('resendToken')" :title="$t('resendToken')" @click="openResendForm">
+                    <Icon icon="material-symbols:add-rounded" width="16" height="16"/>
+                  </el-button>
+                </div>
+              </div>
+              <div class="setting-item">
+                <div class="item-main">
+                  <span class="item-label">{{ $t('blackList') }}</span>
+            <span class="item-desc">{{ $t('descBlocklist') }}</span>
+                </div>
+                <div class="item-control">
+                  <span class="item-sum">{{ blackSummary }}</span>
+                  <el-button class="opt-button" size="small" type="primary" :aria-label="$t('blackList')" :title="$t('blackList')" @click="openBlackListForm">
+                    <Icon icon="fluent:settings-48-regular" width="16" height="16"/>
+                  </el-button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="settings-card">
+            <div class="card-title">{{ $t('emailPush') }}</div>
+            <div class="card-content">
+              <div class="setting-item">
+                <div class="item-main">
+                  <span class="item-label">{{ $t('tgBot') }}</span>
+            <span class="item-desc">{{ $t('descTg') }}</span>
+                </div>
+                <div class="item-control">
+                  <span class="item-sum" :class="{on: setting.tgBotStatus === 0}">{{ setting.tgBotStatus === 0 ? $t('enabled') : $t('disabled') }}</span>
+                  <el-button class="opt-button" size="small" type="primary" :aria-label="$t('tgBot')" :title="$t('tgBot')" @click="openTgSetting">
+                    <Icon icon="fluent:settings-48-regular" width="16" height="16"/>
+                  </el-button>
+                </div>
+              </div>
+              <div class="setting-item">
+                <div class="item-main">
+                  <span class="item-label">{{ $t('otherEmail') }}</span>
+            <span class="item-desc">{{ $t('descForward') }}</span>
+                </div>
+                <div class="item-control">
+                  <span class="item-sum" :class="{on: setting.forwardStatus === 0}">{{ setting.forwardStatus === 0 ? $t('enabled') : $t('disabled') }}</span>
+                  <el-button class="opt-button" size="small" type="primary" :aria-label="$t('otherEmail')" :title="$t('otherEmail')" @click="openThirdEmailSetting">
+                    <Icon icon="fluent:settings-48-regular" width="16" height="16"/>
+                  </el-button>
+                </div>
+              </div>
+              <div class="setting-item">
+                <div class="item-main">
+                  <span class="item-label">{{ $t('forwardingRules') }}</span>
+            <span class="item-desc">{{ $t('descRules') }}</span>
+                </div>
+                <div class="item-control">
+                  <span class="item-sum">{{ setting.ruleType === 0 ? $t('forwardAll') : $t('rules') }}</span>
+                  <el-button class="opt-button" size="small" type="primary" :aria-label="$t('forwardingRules')" :title="$t('forwardingRules')" @click="openForwardRules">
+                    <Icon icon="fluent:settings-48-regular" width="16" height="16"/>
+                  </el-button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="settings-card">
+            <div class="card-title">{{ $t('oss') }}</div>
+            <div class="card-content">
+              <div class="setting-item">
+                <div class="item-main">
+                  <span class="item-label">{{ $t('osDomain') }}</span>
+            <span class="item-desc">{{ $t('ossDomainDesc') }}</span>
+                </div>
+                <div class="item-control">
+                  <span class="item-sum">{{ setting.r2Domain || $t('sumNotSet') }}</span>
+                  <el-button class="opt-button" size="small" type="primary" :aria-label="$t('osDomain')" :title="$t('osDomain')" @click="r2DomainShow = true">
+                    <Icon icon="lsicon:edit-outline" width="16" height="16"/>
+                  </el-button>
+                </div>
+              </div>
+              <div class="setting-item">
+                <div class="item-main">
+                  <span class="item-label">{{ $t('s3Configuration') }}</span>
+            <span class="item-desc">{{ $t('descS3') }}</span>
+                </div>
+                <div class="item-control">
+                  <span class="item-sum" :class="{on: s3Configured}">{{ s3Summary }}</span>
+                  <el-button class="opt-button" size="small" type="primary" :aria-label="$t('s3Configuration')" :title="$t('s3Configuration')" @click="addS3Show = true">
+                    <Icon icon="fluent:settings-48-regular" width="16" height="16"/>
+                  </el-button>
+                </div>
+              </div>
+              <div class="setting-item">
+                <div class="item-main">
+                  <span class="item-label">{{ $t('storageType') }}</span>
+            <span class="item-desc">{{ $t('descStorage') }}</span>
+                </div>
+                <div class="item-control">
+                  <el-tag>{{ setting.storageType }}</el-tag>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="settings-card">
+            <div class="card-title">{{ $t('turnstileSetting') }}</div>
+            <div class="card-content">
+              <div class="setting-item">
+                <div class="item-main">
+                  <span class="item-label">{{ $t('signUpVerification') }}</span>
+            <span class="item-desc">{{ $t('descSignUpVerify') }}</span>
+                </div>
+                <div class="item-control">
+                  <el-button class="opt-button" size="small" type="primary" :aria-label="$t('signUpVerification')" :title="$t('signUpVerification')" @click="openRegVerifyCount">
+                    <Icon icon="fluent:settings-48-regular" width="16" height="16"/>
+                  </el-button>
+                  <el-select class="ctl-select " @change="changeVerify('registerVerify')" v-model="setting.registerVerify" placeholder="Select">
+                    <el-option :value="0" :label="$t('enable')"/>
+                    <el-option :value="1" :label="$t('disable')"/>
+                    <el-option :value="2" :label="$t('rulesVerify')"/>
+                  </el-select>
+                </div>
+              </div>
+              <div class="setting-item">
+                <div class="item-main">
+                  <span class="item-label">{{ $t('addEmailVerification') }}</span>
+            <span class="item-desc">{{ $t('descAddVerify') }}</span>
+                </div>
+                <div class="item-control">
+                  <el-button class="opt-button" size="small" type="primary" :aria-label="$t('addEmailVerification')" :title="$t('addEmailVerification')" @click="openAddVerifyCount">
+                    <Icon icon="fluent:settings-48-regular" width="16" height="16"/>
+                  </el-button>
+                  <el-select class="ctl-select " @change="changeVerify('addEmailVerify')" v-model="setting.addEmailVerify" placeholder="Select">
+                    <el-option :value="0" :label="$t('enable')"/>
+                    <el-option :value="1" :label="$t('disable')"/>
+                    <el-option :value="2" :label="$t('rulesVerify')"/>
+                  </el-select>
+                </div>
+              </div>
+              <div class="setting-item">
+                <div class="item-main">
+                  <span class="item-label">Site Key</span>
+            <span class="item-desc">{{ $t('descSiteKey') }}</span>
+                </div>
+                <div class="item-control">
+                  <span class="item-sum" :class="{on: !!setting.siteKey}">{{ setting.siteKey || $t('sumNotSet') }}</span>
+                  <el-button class="opt-button" size="small" type="primary" :aria-label="'Site Key'" :title="'Site Key'" @click="turnstileShow = true">
+                    <Icon icon="lsicon:edit-outline" width="16" height="16"/>
+                  </el-button>
+                </div>
+              </div>
+              <div class="setting-item">
+                <div class="item-main">
+                  <span class="item-label">Secret Key</span>
+            <span class="item-desc">{{ $t('descSecretKey') }}</span>
+                </div>
+                <div class="item-control">
+                  <span class="item-sum" :class="{on: !!setting.secretKey}">{{ setting.secretKey || $t('sumNotSet') }}</span>
+                  <el-button class="opt-button" size="small" type="primary" :aria-label="'Secret Key'" :title="'Secret Key'" @click="turnstileShow = true">
+                    <Icon icon="lsicon:edit-outline" width="16" height="16"/>
                   </el-button>
                 </div>
               </div>
             </div>
           </div>
         </div>
+        <div class="no-match" v-if="noMatch">{{ $t('noSettingsMatch') }}</div>
       </div>
 
       <!-- Dialogs remain the same -->
@@ -759,7 +800,7 @@
 </template>
 
 <script setup>
-import {computed, defineOptions, nextTick, reactive, ref} from "vue";
+import {computed, defineOptions, nextTick, reactive, ref, watch} from "vue";
 import {deleteBackground, setBackground, setBlackList, settingQuery, settingSet} from "@/request/setting.js";
 import {useSettingStore} from "@/store/setting.js";
 import {useUiStore} from "@/store/ui.js";
@@ -1389,6 +1430,85 @@ function beforeChange() {
   return true
 }
 
+// Turning mail receiving or sending off cuts the service, so ask once before it happens
+function guardOff(field) {
+  if (!settingReady.value || settingLoading.value) return false
+  if (setting.value[field] !== 0) return beforeChange()
+  const message = field === 'receive' ? t('confirmStopReceive') : t('confirmStopSend')
+  return ElMessageBox.confirm(message, {
+    confirmButtonText: t('confirm'),
+    cancelButtonText: t('cancel'),
+    type: 'warning'
+  }).then(() => beforeChange()).catch(() => false)
+}
+
+// Bot checks cannot work without the Turnstile keys, so refuse to turn them on until both are set
+function changeVerify(field) {
+  if (setting.value[field] !== 1 && !(setting.value.siteKey && setting.value.secretKey)) {
+    setting.value[field] = 1
+    ElMessage({message: t('turnstileKeysFirst'), type: 'warning', plain: true})
+    return
+  }
+  change()
+}
+
+const countItems = (value) => (value ? String(value).split(',').filter(item => item.trim()).length : 0)
+
+// One short line next to each settings button, so it is clear whether something is already set up
+const prefixSummary = computed(() => {
+  const s = setting.value
+  const parts = []
+  if (s.minEmailPrefix > 1) parts.push(t('sumMinChars', {n: s.minEmailPrefix}))
+  const blocked = countItems(s.emailPrefixFilter)
+  if (blocked) parts.push(t('sumBlocked', {n: blocked}))
+  return parts.length ? parts.join(', ') : t('sumNotSet')
+})
+
+const blackSummary = computed(() => {
+  const s = setting.value
+  const total = countItems(s.blackSubject) + countItems(s.blackContent) + countItems(s.blackFrom)
+  return total ? t('sumRules', {n: total}) : t('sumNotSet')
+})
+
+const resendSummary = computed(() => {
+  const total = Object.keys(setting.value.resendTokens || {}).length
+  return total ? t('sumDomains', {n: total}) : t('sumNotSet')
+})
+
+const s3Configured = computed(() => !!(setting.value.endpoint && setting.value.bucket && setting.value.s3AccessKey))
+const s3Summary = computed(() => s3Configured.value ? t('sumConfigured') : t('sumNotSet'))
+
+const aiRulesSummary = computed(() => {
+  const total = countItems(setting.value.aiCodeFilter)
+  return total ? t('sumRules', {n: total}) : t('sumAllMail')
+})
+
+// Search: hide rows that do not match, and any card left with no rows
+const query = ref('')
+const gridRef = ref(null)
+const noMatch = ref(false)
+
+watch(query, () => nextTick(applySearch))
+
+function applySearch() {
+  const grid = gridRef.value
+  if (!grid) return
+  const needle = (query.value || '').trim().toLowerCase()
+  let visibleCards = 0
+  grid.querySelectorAll('.settings-card').forEach(card => {
+    const titleHit = !needle || card.querySelector('.card-title').textContent.toLowerCase().includes(needle)
+    let rows = 0
+    card.querySelectorAll('.setting-item').forEach(row => {
+      const hit = titleHit || row.textContent.toLowerCase().includes(needle)
+      row.hidden = !hit
+      if (hit) rows++
+    })
+    card.hidden = rows === 0
+    if (rows > 0) visibleCards++
+  })
+  noMatch.value = visibleCards === 0
+}
+
 function change(e) {
   if (!settingReady.value) return
   const settingForm = {...setting.value}
@@ -1499,44 +1619,42 @@ function editSetting(settingForm, refreshStatus = true) {
   }
 }
 
-.card-grid {
+.settings-toolbar {
+  padding: 20px 20px 0;
 
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(440px, 1fr));
-  align-items: start;
-  padding: 20px;
-  gap: 20px;
-  @media (max-width: 500px) {
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  .el-input {
+    max-width: 360px;
   }
+
   @media (max-width: 1023px) {
-    gap: 15px;
+    padding: 15px 15px 0;
+  }
+}
+
+// Columns pack the cards tightly whatever their heights, so no gaps open up under the short ones
+.card-grid {
+  column-width: 440px;
+  column-gap: 20px;
+  padding: 20px;
+  @media (max-width: 1023px) {
+    column-gap: 15px;
     padding: 15px;
   }
-}
-
-.background {
-  width: 249px;
-  height: 140px;
-  border-radius: 4px;
-  border: 1px solid var(--light-border);
   @media (max-width: 500px) {
-    width: 160px;
-    height: 90px;
+    column-width: 280px;
   }
 }
 
-.background-btn {
-  display: flex;
-  gap: 10px;
-  flex-direction: column;
-}
-
-.bot-verify-select {
-  margin-left: 10px;
+.no-match {
+  padding: 60px 20px;
+  text-align: center;
+  color: var(--el-text-color-secondary);
 }
 
 .settings-card {
+  display: block;
+  break-inside: avoid;
+  margin-bottom: 20px;
   background-color: var(--el-bg-color);
   border-radius: 10px;
   border: 1px solid var(--el-border-color-lighter);
@@ -1547,8 +1665,16 @@ function editSetting(settingForm, refreshStatus = true) {
   &:hover {
     box-shadow: 0 2px 10px rgba(0, 0, 0, .07);
   }
+
+  @media (max-width: 1023px) {
+    margin-bottom: 15px;
+  }
 }
 
+.settings-card[hidden],
+.setting-item[hidden] {
+  display: none;
+}
 
 .card-title {
   font-size: 15px;
@@ -1561,13 +1687,6 @@ function editSetting(settingForm, refreshStatus = true) {
   padding: 4px 20px 8px;
   display: flex;
   flex-direction: column;
-
-  // Every row shares one height and a hairline divider
-  > * {
-    min-height: 48px;
-    padding: 6px 0;
-    box-sizing: border-box;
-  }
 
   > * + * {
     border-top: 1px solid var(--el-border-color-extra-light);
@@ -1587,41 +1706,95 @@ function editSetting(settingForm, refreshStatus = true) {
   }
 }
 
+// Every row: label and one-line explanation on the left, the control (and what it is set to) on the right
 .setting-item {
-  display: grid;
-  grid-template-columns: auto 1fr;
+  display: flex;
   align-items: center;
-  gap: 10px;
-  font-weight: normal;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  min-height: 52px;
+  padding: 8px 0;
+  box-sizing: border-box;
+}
 
-  > div:first-child {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-  }
+.item-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1 1 180px;
+}
 
-  > div:last-child {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    justify-items: flex-end;
-    font-weight: normal;
+.item-label {
+  font-size: 14px;
+}
+
+.item-desc {
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--regular-text-color);
+}
+
+.item-control {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.item-sum {
+  max-width: 190px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 13px;
+  color: var(--el-text-color-secondary);
+
+  &.on {
+    color: var(--el-color-success);
   }
 }
 
-.r2domain-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  > div:first-child {
-    display: flex;
-    align-items: center;
-    gap: 5px;
+// One width for every dropdown and stepper, so the right edge lines up
+.ctl-select {
+  width: 120px;
+}
+
+.ctl-number {
+  width: 130px;
+}
+
+.personalized {
+  align-items: flex-start;
+
+  .item-control {
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 10px;
   }
 
-  > div:last-child {
-    flex: 1;
-    text-align: right;
+  .background-btn {
+    flex-direction: row;
   }
+}
+
+.background {
+  width: 220px;
+  height: 124px;
+  border-radius: 6px;
+  border: 1px solid var(--light-border);
+  @media (max-width: 500px) {
+    width: 160px;
+    height: 90px;
+  }
+}
+
+.background-btn {
+  display: flex;
+  gap: 8px;
 }
 
 .title-icon.warning {
