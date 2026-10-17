@@ -906,8 +906,8 @@ path[fill="#ffdda1"] {
       display: none;
       align-items: center;
       gap: 2px;
-      padding: 0 8px 0 14px;
-      background: linear-gradient(to right, transparent, var(--opt-bg) 14px);
+      padding: 0 8px 0 26px;
+      background: linear-gradient(to right, transparent, var(--opt-bg) 24px);
     }
 
     --opt-bg: var(--email-hover-background);
@@ -955,8 +955,12 @@ path[fill="#ffdda1"] {
     }
   }
 
-  .item-choose {
-    background: var(--choose-account-background);
+  // The chosen row keeps its colour under the pointer, so it stays the same shade as the action buttons overlaid on it
+  .item-choose,
+  .item.item-choose:hover {
+    background: var(--choose-account-background) !important;
+    // Same edge mark as the current page in the sidebar
+    box-shadow: inset 3px 0 0 var(--el-color-primary);
   }
 }
 
