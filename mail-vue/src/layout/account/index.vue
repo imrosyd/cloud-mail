@@ -107,9 +107,6 @@
           </el-skeleton>
         </template>
 
-        <div class="noLoading" v-if="noLoading && accounts.length > 0">
-          <div>{{ $t('noMoreData') }}</div>
-        </div>
         <div class="empty" v-if="noLoading && accounts.length === 0">
           <el-empty :description="$t('noMessagesFound')"></el-empty>
         </div>
@@ -848,13 +845,15 @@ path[fill="#ffdda1"] {
     margin-top: 15px;
   }
 
+  // Slim flat rows: no card shadow, a thin domain-colour strip, hairline dividers
   .item {
-    background-color: var(--el-bg-color);
-    border-radius: 8px;
-    padding: 9px 8px 9px 10px;
-    margin-bottom: 6px;
-    margin-left: 10px;
-    margin-right: 10px;
+    background-color: transparent;
+    border: none;
+    border-bottom: 1px solid var(--el-border-color-extra-light);
+    border-radius: 0;
+    box-shadow: none;
+    padding: 10px 8px 10px 12px;
+    margin: 0;
     cursor: pointer;
     position: relative;
     transition: background-color .15s, box-shadow .15s;
@@ -908,7 +907,6 @@ path[fill="#ffdda1"] {
       align-items: center;
       gap: 2px;
       padding: 0 8px 0 14px;
-      border-radius: 0 8px 8px 0;
       background: linear-gradient(to right, transparent, var(--opt-bg) 14px);
     }
 
@@ -957,13 +955,8 @@ path[fill="#ffdda1"] {
     }
   }
 
-  .item:first-child {
-    margin-top: 10px;
-  }
-
   .item-choose {
     background: var(--choose-account-background);
-    box-shadow: inset 0 0 0 1px var(--el-color-primary-light-5);
   }
 }
 
@@ -1075,8 +1068,16 @@ path[fill="#ffdda1"] {
   }
 }
 
-.item {
-  border-left: 3px solid var(--domain-color) !important;
+// Domain marker: a small dot before the address instead of a full-height strip
+.item .account::before {
+  content: "";
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 8px;
+  border-radius: 50%;
+  background: var(--domain-color);
+  vertical-align: 1px;
 }
 
 
