@@ -11,6 +11,7 @@ import loading from "@/components/loading/index.vue";
 import {useI18n} from 'vue-i18n'
 import {useUiStore} from '@/store/ui.js'
 import {useSettingStore} from '@/store/setting.js'
+import toolbarIcons from './icons.js'
 
 defineExpose({
   clearEditor,
@@ -101,9 +102,17 @@ function initEditor() {
          --scrollbar-thumb-color: ${uiStore.dark ? '#8D9095' : '#A8ABB2'};
     }`,
     plugins: 'link image advlist lists  emoticons fullscreen  table preview code',
-    toolbar: 'bold emoticons forecolor backcolor italic fontsize | alignleft aligncenter alignright alignjustify | outdent indent |  bullist numlist | link image  | table code preview fullscreen',
-    // Phones wrap the tools onto rows so none are hidden off screen
-    toolbar_mode: window.innerWidth < 768 ? 'wrap' : 'scrolling',
+    // Two deliberate rows: text formatting on top, layout and inserts below
+    toolbar: [
+      'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough forecolor backcolor removeformat',
+      'alignleft aligncenter alignright alignjustify | outdent indent | bullist numlist | blockquote hr | link image table | emoticons code preview fullscreen'
+    ],
+    // The root block is a div, so "Paragraph" must produce one too
+    block_formats: 'Paragraph=div; Heading 1=h1; Heading 2=h2; Heading 3=h3; Preformatted=pre',
+    // Faces that email clients have, each with a generic fallback
+    font_family_formats: 'Sans Serif=Arial,Helvetica,sans-serif; Serif=Georgia,Times New Roman,serif; Monospace=Courier New,monospace; Verdana=Verdana,Geneva,sans-serif; Tahoma=Tahoma,Geneva,sans-serif; Trebuchet MS=Trebuchet MS,sans-serif',
+    // Tools wrap onto a second row instead of hiding behind a "more" button
+    toolbar_mode: 'wrap',
     font_size_formats: '8px 10px 12px 14px 16px 18px 24px 36px',
     emoticons_search: false,
     language: language.value,
@@ -113,6 +122,8 @@ function initEditor() {
     noneditable_class: 'mceNonEditable',
     setup: (ed) => {
       editor.value = ed;
+      // One icon family with the rest of the app instead of TinyMCE's mixed set
+      Object.entries(toolbarIcons).forEach(([name, svg]) => ed.ui.registry.addIcon(name, svg))
       ed.on('init', () => {
         ed.setContent(props.defValue);
         isInitialized.value = true;
@@ -194,7 +205,11 @@ function destroyEditor() {
 }
 
 :deep(.tox-tbtn.tox-tbtn--select.tox-tbtn--bespoke) {
-  width: 80px !important;
+  width: 112px !important;
+}
+
+:deep(.tox-tbtn.tox-tbtn--select.tox-tbtn--bespoke[data-mce-name='fontsize']) {
+  width: 72px !important;
 }
 
 :deep(.tox.tox-tinymce.tox-fullscreen) {
@@ -215,8 +230,14 @@ function destroyEditor() {
 }
 
 :deep(.tox-toolbar__group) {
-  padding-left: 0 !important;
-  margin: 0 !important;
+  padding: 0 6px 0 0 !important;
+  margin: 0 6px 0 0 !important;
+  border-right: 1px solid var(--el-border-color-lighter) !important;
+}
+
+:deep(.tox-toolbar__group:last-of-type) {
+  border-right: none !important;
+  margin-right: 0 !important;
 }
 
 :deep(.tox-tbtn) {

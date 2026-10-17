@@ -225,3 +225,59 @@ html[data-theme-to="light"]::view-transition-old(root) {
     background: var(--el-color-primary);
     color: #fff;
 }
+
+/* TinyMCE's dark skin paints its buttons and menus a blue-grey; use the app's neutral dark instead */
+html.dark .tox .tox-tbtn--select,
+html.dark .tox .tox-tbtn--bespoke {
+  background: transparent;
+}
+html.dark .tox .tox-tbtn:hover,
+html.dark .tox .tox-tbtn:focus,
+html.dark .tox .tox-tbtn--select:hover,
+html.dark .tox .tox-split-button:hover {
+  background: rgba(255, 255, 255, .08);
+}
+html.dark .tox .tox-tbtn--enabled,
+html.dark .tox .tox-tbtn--enabled:hover {
+  background: rgba(255, 255, 255, .12);
+  color: var(--el-color-primary);
+}
+html.dark .tox .tox-tbtn--enabled svg {
+  color: var(--el-color-primary);
+}
+html.dark .tox .tox-menu,
+html.dark .tox .tox-collection--list,
+html.dark .tox .tox-swatches-menu,
+html.dark .tox .tox-pop__dialog {
+  background-color: var(--el-bg-color-overlay);
+  border-color: var(--el-border-color);
+}
+html.dark .tox .tox-collection__item--active,
+html.dark .tox .tox-collection--list .tox-collection__item--active,
+html.dark .tox .tox-collection--toolbar .tox-collection__item--active {
+  background-color: rgba(255, 255, 255, .08);
+}
+
+/* Editor toolbar: the same rounded square buttons as the rest of the app, no row-divider lines */
+.tox .tox-toolbar,
+.tox .tox-toolbar__overflow,
+.tox .tox-toolbar__primary {
+  background-image: none;
+}
+.tox .tox-tbtn {
+  border-radius: 6px;
+  height: 32px;
+}
+.tox .tox-tbtn:not(.tox-tbtn--select) {
+  width: 32px;
+}
+.tox .tox-tbtn svg {
+  fill: none;
+  width: 20px;
+  height: 20px;
+}
+html.dark .tox .tox-split-button[aria-expanded='true'],
+html.dark .tox .tox-tbtn[aria-expanded='true'],
+html.dark .tox .tox-split-button:focus {
+  background: rgba(255, 255, 255, .12);
+}
