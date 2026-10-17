@@ -197,7 +197,7 @@
                        :type="type"/>
       <div class="empty" v-if="noLoading && emailList.length === 0 && !loading">
         <slot name="empty">
-          <el-empty :image-size="isMobile ? 120 : null" :description="$t('noMessagesFound')"><template #image><Icon icon="lucide:mail-open" width="40" height="40"/></template></el-empty>
+          <el-empty :image-size="isMobile ? 120 : null" :description="$t('noMessagesFound')"></el-empty>
         </slot>
       </div>
     </div>
@@ -218,8 +218,7 @@
                     @unread="toggleRead"
                     @delete="email => deleteOrPurge([email.emailId])"/>
       <div v-else class="preview-empty">
-        <Icon icon="lucide:mail-open" width="40" height="40"/>
-        <span>{{ $t('selectToRead') }}</span>
+        <el-empty :image-size="isMobile ? 120 : null" :description="$t('selectToRead')"/>
       </div>
     </aside>
     </div>

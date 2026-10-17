@@ -1,81 +1,93 @@
 <template>
   <div class="box">
-    <div class="container">
-      <div class="title">{{$t('profile')}}</div>
-      <div class="item">
-        <div>{{$t('username')}}</div>
-        <div>
-          <span v-if="setNameShow" class="edit-name-input">
-            <el-input v-model="accountName"  ></el-input>
-            <span class="edit-name" @click="setName">
-             {{$t('save')}}
+    <section class="section">
+      <h2 class="title">{{$t('profile')}}</h2>
+      <div class="card">
+        <div class="row">
+          <div class="label">{{$t('username')}}</div>
+          <div class="control">
+            <span v-if="setNameShow" class="edit-name-box">
+              <el-input v-model="accountName" @keyup.enter="setName"></el-input>
+              <el-button type="primary" @click="setName">{{$t('save')}}</el-button>
             </span>
-          </span>
-          <span v-else class="user-name">
-            <span >{{ userStore.user.name }}</span>
-            <span class="edit-name" @click="showSetName">
-             {{$t('change')}}
+            <span v-else class="user-name">
+              <span class="name-text">{{ userStore.user.name }}</span>
+              <span class="edit-name" @click="showSetName">{{$t('change')}}</span>
             </span>
-          </span>
+          </div>
+        </div>
+        <div class="row">
+          <div class="label">{{$t('emailAccount')}}</div>
+          <div class="control value">{{ userStore.user.email }}</div>
+        </div>
+        <div class="row">
+          <div class="label">{{$t('password')}}</div>
+          <div class="control">
+            <el-button type="primary" @click="pwdShow = true">{{$t('changePwdBtn')}}</el-button>
+          </div>
         </div>
       </div>
-      <div class="item">
-        <div>{{$t('emailAccount')}}</div>
-        <div>{{ userStore.user.email }}</div>
-      </div>
-      <div class="item">
-        <div>{{$t('password')}}</div>
-        <div>
-          <el-button type="primary" @click="pwdShow = true">{{$t('changePwdBtn')}}</el-button>
+    </section>
+
+    <section class="section">
+      <h2 class="title">{{$t('language')}}</h2>
+      <div class="card">
+        <div class="row">
+          <div class="label">{{$t('language')}}</div>
+          <div class="control">
+            <el-select :model-value="langSelect" class="language-select" placeholder="Select" @change="changeLang">
+              <el-option label="中文" value="zh" @pointerdown.prevent.stop="changeLang('zh')"/>
+              <el-option label="English" value="en" @pointerdown.prevent.stop="changeLang('en')"/>
+              <el-option label="Indonesia" value="id" @pointerdown.prevent.stop="changeLang('id')"/>
+            </el-select>
+          </div>
         </div>
       </div>
-    </div>
-    <div class="language">
-      <div class="title">{{$t('language')}}</div>
-      <el-select
-          :model-value="langSelect"
-          class="language-select"
-          placeholder="Select"
-          @change="changeLang"
-      >
-        <el-option label="中文" value="zh" @pointerdown.prevent.stop="changeLang('zh')"/>
-        <el-option label="English" value="en" @pointerdown.prevent.stop="changeLang('en')"/>
-        <el-option label="Indonesia" value="id" @pointerdown.prevent.stop="changeLang('id')"/>
-      </el-select>
-    </div>
-    <div class="notify">
-      <div class="title">{{$t('newEmailNotify')}}</div>
-      <div class="notify-item">
-        <div>
-          <div>{{$t('desktopNotify')}}</div>
-          <div class="notify-desc">{{$t('desktopNotifyDesc')}}</div>
+    </section>
+
+    <section class="section">
+      <h2 class="title">{{$t('newEmailNotify')}}</h2>
+      <div class="card">
+        <div class="row">
+          <div class="label">
+            <div>{{$t('desktopNotify')}}</div>
+            <div class="desc">{{$t('desktopNotifyDesc')}}</div>
+          </div>
+          <div class="control"><el-switch :model-value="notifyStore.desktop" @change="changeDesktop"/></div>
         </div>
-        <el-switch :model-value="notifyStore.desktop" @change="changeDesktop"/>
-      </div>
-      <div class="notify-item">
-        <div>{{$t('notifySound')}}</div>
-        <el-switch v-model="notifyStore.sound"/>
-      </div>
-    </div>
-    <div class="notify">
-      <div class="title">{{$t('privacy')}}</div>
-      <div class="notify-item">
-        <div>
-          <div>{{$t('blockImages')}}</div>
-          <div class="notify-desc">{{$t('blockImagesDesc')}}</div>
+        <div class="row">
+          <div class="label">{{$t('notifySound')}}</div>
+          <div class="control"><el-switch v-model="notifyStore.sound"/></div>
         </div>
-        <el-switch v-model="uiStore.blockRemoteImages"/>
       </div>
-    </div>
-    <div class="del-email" v-perm="'my:delete'">
-      <div class="title">{{$t('deleteUser')}}</div>
-      <div style="color: var(--regular-text-color);">
-        {{$t('delAccountMsg')}}
+    </section>
+
+    <section class="section">
+      <h2 class="title">{{$t('privacy')}}</h2>
+      <div class="card">
+        <div class="row">
+          <div class="label">
+            <div>{{$t('blockImages')}}</div>
+            <div class="desc">{{$t('blockImagesDesc')}}</div>
+          </div>
+          <div class="control"><el-switch v-model="uiStore.blockRemoteImages"/></div>
+        </div>
       </div>
-      <div>
-        <el-button type="danger" @click="deleteConfirm">{{$t('deleteUserBtn')}}</el-button>
+    </section>
+
+    <section class="section danger" v-perm="'my:delete'">
+      <h2 class="title">{{$t('deleteUser')}}</h2>
+      <div class="card">
+        <div class="row">
+          <div class="label">
+            <div class="desc">{{$t('delAccountMsg')}}</div>
+          </div>
+          <div class="control">
+            <el-button type="danger" @click="deleteConfirm">{{$t('deleteUserBtn')}}</el-button>
+          </div>
+        </div>
       </div>
-    </div>
+    </section>
     <el-dialog v-model="pwdShow" :title="$t('changePassword')" width="340">
       <div class="update-pwd">
         <el-input type="password" :placeholder="$t('newPassword')" v-model="form.password" autocomplete="off"/>
@@ -252,12 +264,14 @@ function submitPwd() {
 </script>
 <style scoped lang="scss">
 .box {
-  max-width: 880px;
+  width: 100%;
+  max-width: 760px;
   margin: 0 auto;
-  padding: 48px 48px 64px;
+  box-sizing: border-box;
+  padding: 36px 24px 64px;
 
   @media (max-width: 767px) {
-    padding: 30px 30px;
+    padding: 24px 16px 48px;
   }
 
   .update-pwd {
@@ -266,108 +280,106 @@ function submitPwd() {
     gap: 15px;
   }
 
+  .section {
+    margin-bottom: 28px;
+  }
+
   .title {
-    font-size: 18px;
-    font-weight: bold;
+    margin: 0 0 12px;
+    font-size: 15px;
+    font-weight: 600;
   }
 
-  .container {
+  .card {
+    border: 1px solid var(--el-border-color-lighter);
+    border-radius: 10px;
+    background: var(--el-bg-color);
     font-size: 14px;
-    display: grid;
-    gap: 20px;
-    margin-bottom: 40px;
+  }
 
-    .item {
-      display: grid;
-      grid-template-columns: 180px 1fr;
-      gap: 24px;
-      position: relative;
-      .user-name {
-        display: grid;
-        grid-template-columns: auto 1fr;
-        span:first-child {
-          overflow: hidden;
-          white-space: nowrap;
-          text-overflow: ellipsis;
-        }
-      }
+  .row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    min-height: 56px;
+    padding: 12px 20px;
 
-      .edit-name-input {
-        position: absolute;
-        bottom: -6px;
-        .el-input {
-          width: min(200px,calc(100vw - 222px));
-        }
-      }
+    & + .row {
+      border-top: 1px solid var(--el-border-color-lighter);
+    }
 
-      .edit-name {
-        color: #4dabff;
-        padding-left: 10px;
-        cursor: pointer;
-      }
-
-      @media (max-width: 767px) {
-        grid-template-columns: 50px 1fr;
-        gap: 70px;
-      }
-
-      div:first-child {
-        font-weight: bold;
-      }
-
-      div:last-child {
-        overflow: hidden;
-        white-space: nowrap;
-        text-overflow: ellipsis;
-      }
+    @media (max-width: 767px) {
+      padding: 12px 16px;
+      gap: 12px;
     }
   }
 
-  .language {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    margin-bottom: 40px;
-
-    .language-select {
-      width: 100px;
-    }
+  .label {
+    min-width: 0;
+    font-weight: 500;
   }
 
-  .notify {
+  .desc {
+    margin-top: 2px;
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 1.5;
+    color: var(--regular-text-color);
+  }
+
+  .control {
+    flex-shrink: 0;
     display: flex;
-    flex-direction: column;
-    gap: 16px;
-    margin-bottom: 40px;
-    font-size: 14px;
+    align-items: center;
+    justify-content: flex-end;
+    min-width: 0;
+    max-width: 60%;
+  }
 
-    .notify-item {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 20px;
-      max-width: 560px;
-    }
+  .value {
+    color: var(--regular-text-color);
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    display: block;
+  }
 
-    .notify-desc {
+  .user-name {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+
+    .name-text {
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
       color: var(--regular-text-color);
-      font-size: 12px;
-      margin-top: 4px;
     }
   }
 
-  @media (min-width: 768px) {
-    .container, .language, .notify {
-      padding-bottom: 32px;
-      border-bottom: 1px solid var(--el-border-color-lighter);
-    }
+  .edit-name {
+    color: var(--el-color-primary);
+    cursor: pointer;
+    flex-shrink: 0;
   }
 
-  .del-email {
-    font-size: 14px;
+  .edit-name-box {
     display: flex;
-    flex-direction: column;
-    gap: 20px;
+    gap: 8px;
+
+    .el-input {
+      width: min(220px, calc(100vw - 220px));
+    }
+  }
+
+  .language-select {
+    width: 140px;
+  }
+
+  .danger .title {
+    color: var(--el-color-danger);
   }
 }
 </style>

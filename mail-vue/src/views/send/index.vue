@@ -16,7 +16,7 @@
       <emailFilters ref="filters" @change="applyFilters"/>
     </template>
     <template #empty v-if="filtered">
-      <el-empty :description="$t('noResults')"><template #image><Icon icon="lucide:mail-open" width="40" height="40"/></template>
+      <el-empty :description="$t('noResults')">
         <el-button @click="filters.reset()">{{ $t('clearFilters') }}</el-button>
       </el-empty>
     </template>

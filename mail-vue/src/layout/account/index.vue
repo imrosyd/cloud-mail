@@ -111,7 +111,7 @@
           <div>{{ $t('noMoreData') }}</div>
         </div>
         <div class="empty" v-if="noLoading && accounts.length === 0">
-          <el-empty :description="$t('noMessagesFound')"><template #image><Icon icon="lucide:mail-open" width="40" height="40"/></template></el-empty>
+          <el-empty :description="$t('noMessagesFound')"></el-empty>
         </div>
       </div>
 
