@@ -58,6 +58,7 @@ const id = {
 	unauthorized: 'Tidak memiliki izin',
 	bannedSend: 'Anda hanya dapat mengirim email ke kotak surat internal',
 	onlyInternalSend: 'Peran Anda hanya mengizinkan pengiriman email internal',
+	tooManyRecipients: 'Terlalu banyak penerima, batasnya {{count}} per email',
 	noDomainPermAdd: 'Tidak memiliki izin untuk menambahkan email domain ini',
 	noDomainPermReg: 'Tidak memiliki izin untuk mendaftarkan email domain ini',
 	noDomainPermRegKey: 'Kode pendaftaran tidak berlaku untuk domain ini',

@@ -58,6 +58,7 @@ const zh = {
 	unauthorized: '权限不足',
 	bannedSend: '你没有邮件发送权限',
 	onlyInternalSend: '权限不足，只能给站内邮箱发件',
+	tooManyRecipients: '收件人过多，每封邮件最多 {{count}} 个',
 	noDomainPermAdd: '你没有权限添加该域名邮箱',
 	noDomainPermReg: '你没有权限注册该域名邮箱',
 	noDomainPermRegKey: '你的注册码没有权限注册该域名邮箱',

@@ -22,6 +22,10 @@ import domainUtils from '../utils/domain-uitls';
 import account from "../entity/account";
 import { att } from '../entity/att';
 import telegramService from './telegram-service';
+import verifyUtils from '../utils/verify-utils';
+
+//Most providers cap one message at 50 recipients in total (to, cc and bcc together)
+const MAX_RECIPIENTS = 50;
 
 const emailService = {
 
@@ -210,6 +214,27 @@ const emailService = {
 		return orm(c).insert(email).values({ ...params }).returning().get();
 	},
 
+	//Keep valid, unique addresses that are not already in `exclude`
+	cleanRecipients(list, exclude = []) {
+		if (!Array.isArray(list)) {
+			return [];
+		}
+
+		const seen = new Set(exclude.map(item => item.toLowerCase()));
+		const result = [];
+
+		for (const raw of list) {
+			const address = String(raw ?? '').trim();
+			if (!address || !verifyUtils.isEmail(address) || seen.has(address.toLowerCase())) {
+				continue;
+			}
+			seen.add(address.toLowerCase());
+			result.push(address);
+		}
+
+		return result;
+	},
+
 	//Send email
 	async send(c, params, userId) {
 
@@ -219,6 +244,8 @@ const emailService = {
 			sendType, //send type
 			emailId, //email id, included for reply
 			receiveEmail, //recipient email
+			cc = [], //carbon copy
+			bcc = [], //blind carbon copy
 			text, //plain text
 			content, //email content
 			subject, //email subject
@@ -226,6 +253,15 @@ const emailService = {
 		} = params;
 
 		const { resendTokens, r2Domain, send, domainList } = await settingService.query(c);
+
+		//Cc and Bcc: valid addresses only, no repeats, and nobody twice across the three lists
+		cc = this.cleanRecipients(cc, receiveEmail);
+		bcc = this.cleanRecipients(bcc, [...receiveEmail, ...cc]);
+		const allRecipients = [...receiveEmail, ...cc, ...bcc];
+
+		if (allRecipients.length > MAX_RECIPIENTS) {
+			throw new BizError(t('tooManyRecipients', { count: MAX_RECIPIENTS }));
+		}
 
 		let { imageDataList, html } = await attService.toImageUrlHtml(c, content);
 
@@ -238,7 +274,7 @@ const emailService = {
 		const roleRow = await roleService.selectById(c, userRow.type);
 
 		//Check if all recipients are internal
-		const allInternal = receiveEmail.every(email => {
+		const allInternal = allRecipients.every(email => {
 			const domain = '@' + emailUtils.getDomain(email);
 			return domainList.includes(domain);
 		});
@@ -265,7 +301,7 @@ const emailService = {
 				if (roleRow.sendType === 'count') throw new BizError(t('totalSendLimit'), 403);
 			}
 
-			if (userRow.sendCount + receiveEmail.length > roleRow.sendCount) {
+			if (userRow.sendCount + allRecipients.length > roleRow.sendCount) {
 				if (roleRow.sendType === 'day') throw new BizError(t('daySendLack'), 403);
 				if (roleRow.sendType === 'count') throw new BizError(t('totalSendLack'), 403);
 			}
@@ -329,6 +365,8 @@ const emailService = {
 					name,
 					accountEmail: accountRow.email,
 					receiveEmail,
+					cc,
+					bcc,
 					subject,
 					text,
 					html,
@@ -341,6 +379,8 @@ const emailService = {
 					name,
 					accountEmail: accountRow.email,
 					receiveEmail,
+					cc,
+					bcc,
 					subject,
 					text,
 					html,
@@ -384,6 +424,8 @@ const emailService = {
 		});
 
 		emailData.recipient = JSON.stringify(recipient);
+		emailData.cc = JSON.stringify(cc.map(item => ({ address: item, name: '' })));
+		emailData.bcc = JSON.stringify(bcc.map(item => ({ address: item, name: '' })));
 
 		if (sendType === 'reply') {
 			emailData.inReplyTo = emailRow.messageId;
@@ -392,7 +434,7 @@ const emailService = {
 
 		//If role has send count limit, increment user send count
 		if (roleRow.sendCount && roleRow.sendType !== 'internal') {
-			await userService.incrUserSendCount(c, receiveEmail.length, userId);
+			await userService.incrUserSendCount(c, allRecipients.length, userId);
 		}
 
 		//Save to database and return result
@@ -419,7 +461,7 @@ const emailService = {
 
 		//If all recipients are internal, save directly to database
 		if (allInternal) {
-			await this.HandleOnSiteEmail(c, receiveEmail, emailResult, attList);
+			await this.HandleOnSiteEmail(c, allRecipients, emailResult, attList);
 		}
 
 		const dateStr = dayjs().format('YYYY-MM-DD');
@@ -427,9 +469,9 @@ const emailService = {
 
 		//Record daily send count
 		if (!daySendTotal) {
-			await c.env.kv.put(kvConst.SEND_DAY_COUNT + dateStr, JSON.stringify(receiveEmail.length), { expirationTtl: 60 * 60 * 24 });
+			await c.env.kv.put(kvConst.SEND_DAY_COUNT + dateStr, JSON.stringify(allRecipients.length), { expirationTtl: 60 * 60 * 24 });
 		} else  {
-			daySendTotal = Number(daySendTotal) + receiveEmail.length
+			daySendTotal = Number(daySendTotal) + allRecipients.length
 			await c.env.kv.put(kvConst.SEND_DAY_COUNT + dateStr, JSON.stringify(daySendTotal), { expirationTtl: 60 * 60 * 24 });
 		}
 
@@ -442,6 +484,14 @@ const emailService = {
 			to: [...params.receiveEmail],
 			subject: params.subject
 		};
+
+		if (params.cc?.length) {
+			sendForm.cc = [...params.cc];
+		}
+
+		if (params.bcc?.length) {
+			sendForm.bcc = [...params.bcc];
+		}
 
 		if (params.text) {
 			sendForm.text = params.text;
@@ -483,6 +533,14 @@ const emailService = {
 			html: params.html,
 			attachments: await this.toResendAttachments(params.attachments)
 		};
+
+		if (params.cc?.length) {
+			sendForm.cc = [...params.cc];
+		}
+
+		if (params.bcc?.length) {
+			sendForm.bcc = [...params.bcc];
+		}
 
 		if (params.sendType === 'reply') {
 			sendForm.headers = {
@@ -625,6 +683,8 @@ const emailService = {
 			emailValues.toEmail = email;
 			emailValues.toName = emailUtils.getName(email);
 			emailValues.emailId = null;
+			//Each recipient's copy must not reveal who was blind-copied
+			emailValues.bcc = '[]';
 
 			const accountRow = accountList.find(accountRow => accountRow.email === email);
 

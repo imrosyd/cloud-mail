@@ -58,6 +58,7 @@ const en = {
 	unauthorized: 'Unauthorized',
 	bannedSend: 'You can only send emails to internal mailboxes',
 	onlyInternalSend: 'Your current role allows sending internal emails only',
+	tooManyRecipients: 'Too many recipients, the limit is {{count}} per message',
 	noDomainPermAdd: "No permission to add this domain email",
 	noDomainPermReg: "No permission to register this domain email",
 	noDomainPermRegKey: "Registration code not valid for this domain",
