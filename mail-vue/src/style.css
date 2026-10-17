@@ -117,13 +117,13 @@ button, input, select, textarea {
     --light-ill: #F5F7FA;
     --light-border: #E4E7ED;
     --header-actions-border: inset 0 -1px 0 0 var(--el-border-color-lighter);
-    --aside-backgound: #001529;
+    --aside-backgound: #ffffff;
     --loadding-background: rgba(255, 255, 255, 0.8);
     --dark-border: #CDD0D6;
     --base-fill: #F0F2F5;
     --regular-text-color: #585d69;
     --light-border-color: #e7e9ec;
-    --aside-right-border: 3px 0 5px rgba(0, 21, 41, .35);
+    --aside-right-border: 1px 0 0 0 #e3e7ee, 3px 0 8px rgba(15, 40, 70, .06);
     --choose-account-background: var(--el-color-primary-light-8);
     --el-text-color-regular: var(--el-text-color-primary);
     --email-scroll-content-color: rgba(25, 41, 59, 0.6);

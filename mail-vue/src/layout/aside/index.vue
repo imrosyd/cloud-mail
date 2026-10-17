@@ -113,9 +113,32 @@ function openCompose() {
 }
 </script>
 
+<style>
+/* Light theme: a white sidebar with dark text; the dark theme keeps the values set on .aside-box */
+html:not(.dark) .aside-box {
+  --aside-fg: #4a5565;
+  --aside-fg-strong: #1f2733;
+  --aside-fg-dim: #8a93a2;
+  --aside-line: #e6e9ee;
+  --aside-hover: rgba(15, 40, 70, 0.06);
+  --aside-focus: rgba(15, 40, 70, 0.1);
+  --aside-icon-on: #1677d6;
+  --aside-logo: #1890ff;
+}
+</style>
+
 <style lang="scss" scoped>
 .aside-box {
   --accent: #1890ff;
+  // Colours for the dark sidebar; the light theme overrides them below
+  --aside-fg: rgba(255, 255, 255, 0.78);
+  --aside-fg-strong: #ffffff;
+  --aside-fg-dim: rgba(255, 255, 255, 0.55);
+  --aside-line: rgba(255, 255, 255, 0.1);
+  --aside-hover: rgba(255, 255, 255, 0.08);
+  --aside-focus: rgba(255, 255, 255, 0.13);
+  --aside-icon-on: #4aa8ff;
+  --aside-logo: #4aa8ff;
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -136,7 +159,7 @@ function openCompose() {
   height: 44px;
   margin: 14px 10px 8px;
   padding: 0 6px;
-  color: #ffffff;
+  color: var(--aside-fg-strong);
   font-size: 16px;
   font-weight: 700;
   overflow: hidden;
@@ -145,7 +168,7 @@ function openCompose() {
     flex-shrink: 0;
     width: 32px;
     height: 32px;
-    color: #4aa8ff;
+    color: var(--aside-logo);
   }
 
   .brand-name {
@@ -207,8 +230,8 @@ function openCompose() {
 .manage-title {
   margin: 14px 10px 4px;
   padding: 14px 10px 0;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  color: rgba(255, 255, 255, 0.55);
+  border-top: 1px solid var(--aside-line);
+  color: var(--aside-fg-dim);
   font-size: 12px;
   font-weight: 600;
   letter-spacing: .6px;
@@ -232,7 +255,7 @@ function openCompose() {
   padding: 0 10px !important;
   gap: 12px;
   position: relative;
-  color: rgba(255, 255, 255, 0.78) !important;
+  color: var(--aside-fg) !important;
   transition: background-color .15s, color .15s;
 }
 
@@ -255,12 +278,16 @@ function openCompose() {
 
 .choose-item {
   font-weight: 600;
-  color: #fff !important;
-  background: rgba(24, 144, 255, 0.18) !important;
+  color: var(--aside-fg-strong) !important;
+  // No fill: the current page is told apart by the edge mark, a white label and an accent-coloured icon
+  background: transparent !important;
 }
 
-// In the narrow rail a tint alone is faint on a 44px square, so the current page also gets an edge mark
-.rail .choose-item::before {
+.choose-item .menu-icon {
+  color: var(--aside-icon-on);
+}
+
+.choose-item::before {
   content: '';
   position: absolute;
   left: -10px;
@@ -288,8 +315,8 @@ function openCompose() {
 @media (hover: hover) {
   .el-menu-item:hover,
   .foot-btn:hover {
-    background: rgba(255, 255, 255, 0.08) !important;
-    color: #fff !important;
+    background: var(--aside-hover) !important;
+    color: var(--aside-fg-strong) !important;
   }
 }
 
@@ -297,8 +324,8 @@ function openCompose() {
 .el-menu-item:focus-visible,
 .foot-btn:focus-visible {
   outline: none;
-  background: rgba(255, 255, 255, 0.13) !important;
-  color: #fff !important;
+  background: var(--aside-focus) !important;
+  color: var(--aside-fg-strong) !important;
 }
 
 .menu-name {
@@ -335,12 +362,6 @@ function openCompose() {
   line-height: 20px;
   text-align: center;
   box-sizing: border-box;
-}
-
-// On the current page the badge flips to white so it does not melt into the tint
-.choose-item .unread-badge {
-  background: #fff;
-  color: #1677d6;
 }
 
 .rail .unread-badge {
