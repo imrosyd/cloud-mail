@@ -226,6 +226,7 @@ const zh = {
     turnstileKeysFirst: '请先填写 Site Key 和 Secret Key',
     confirmStopReceive: '停止接收邮件？关闭后来信将被拒收，直到重新开启。',
     confirmStopSend: '停止发送邮件？关闭后所有人都无法发信，直到重新开启。',
+    capsLockOn: '大写锁定已开启',
     composeEmail: '写邮件',
     collapseSidebar: '收起侧边栏',
     expandSidebar: '展开侧边栏',

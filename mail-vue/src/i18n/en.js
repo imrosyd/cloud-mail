@@ -226,6 +226,7 @@ const en = {
     turnstileKeysFirst: 'Add the Site Key and Secret Key first',
     confirmStopReceive: 'Stop receiving mail? Incoming mail will be rejected until you turn this back on.',
     confirmStopSend: 'Stop sending mail? Nobody can send until you turn this back on.',
+    capsLockOn: 'Caps Lock is on',
     composeEmail: 'Compose',
     collapseSidebar: 'Collapse sidebar',
     expandSidebar: 'Expand sidebar',

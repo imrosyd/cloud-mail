@@ -10,12 +10,15 @@
     <div v-else :style="background"></div>
     <div class="form-wrapper">
       <div class="container">
+        <svg class="brand-logo" viewBox="-0.4 -1.6 25 25" aria-hidden="true">
+          <path fill="currentColor" d="M7 19.2a5 5 0 0 1-.9-9.9A6.4 6.4 0 0 1 18.5 8.9 5.2 5.2 0 0 1 17.7 19.2z"/>
+        </svg>
         <span class="form-title">{{ settingStore.settings.title }}</span>
         <span class="form-desc" v-if="show === 'login'">{{ $t('loginTitle') }}</span>
         <span class="form-desc" v-else>{{ $t('regTitle') }}</span>
-        <div v-show="show === 'login'">
-          <el-input :class="!hideLoginDomain ? 'email-input' : ''" v-model="form.email"
-                    type="text" :placeholder="$t('emailAccount')" autocomplete="off">
+        <form v-show="show === 'login'" @submit.prevent="submit" novalidate>
+          <el-input ref="emailInput" :class="!hideLoginDomain ? 'email-input' : ''" v-model="form.email" name="username"
+                    type="text" :placeholder="$t('emailAccount')" autocomplete="username" inputmode="email">
             <template #append v-if="!hideLoginDomain">
               <div @click.stop="openSelect">
                 <el-select
@@ -32,25 +35,27 @@
                       :value="item"
                   />
                 </el-select>
-                <div style="color: var(--el-text-color-primary)">
+                <div class="suffix-btn" role="button" tabindex="0" :aria-label="$t('select')" @keydown.enter.prevent="openSelect" @keydown.space.prevent="openSelect" style="color: var(--el-text-color-primary)">
                   <span>{{ suffix }}</span>
                   <Icon class="setting-icon" icon="mingcute:down-small-fill" width="20" height="20"/>
                 </div>
               </div>
             </template>
           </el-input>
-          <el-input v-model="form.password" :placeholder="$t('password')" type="password" autocomplete="off">
+          <el-input v-model="form.password" name="password" :placeholder="$t('password')" type="password" show-password
+                    autocomplete="current-password" @keydown="checkCaps" @keyup="checkCaps" @blur="capsOn = false">
           </el-input>
-          <el-button class="btn" type="primary" @click="submit" :loading="loginLoading"
+          <div class="caps-hint" v-if="capsOn" role="status">{{ $t('capsLockOn') }}</div>
+          <el-button class="btn" type="primary" native-type="submit" :loading="loginLoading"
           >{{ $t('loginBtn') }}
           </el-button>
           <el-button class="btn" v-if="settingStore.settings.linuxdoSwitch"  style="margin-top: 10px"  @click="linuxDoLogin">
             <el-avatar src="/image/linuxdo.webp" :size="18" style="margin-right: 10px" />LinuxDo
           </el-button>
-        </div>
-        <div v-show="show !== 'login'">
-          <el-input :class="!hideLoginDomain ? 'email-input' : ''" v-model="registerForm.email" type="text" :placeholder="$t('emailAccount')"
-                    autocomplete="off">
+        </form>
+        <form v-show="show !== 'login'" @submit.prevent="submitRegister" novalidate>
+          <el-input :class="!hideLoginDomain ? 'email-input' : ''" v-model="registerForm.email" name="username" type="text" :placeholder="$t('emailAccount')"
+                    autocomplete="username" inputmode="email">
             <template #append v-if="!hideLoginDomain">
               <div @click.stop="openSelect">
                 <el-select
@@ -67,16 +72,17 @@
                       :value="item"
                   />
                 </el-select>
-                <div>
+                <div class="suffix-btn" role="button" tabindex="0" :aria-label="$t('select')" @keydown.enter.prevent="openSelect" @keydown.space.prevent="openSelect">
                   <span>{{ suffix }}</span>
                   <Icon class="setting-icon" icon="mingcute:down-small-fill" width="20" height="20"/>
                 </div>
               </div>
             </template>
           </el-input>
-          <el-input v-model="registerForm.password" :placeholder="$t('password')" type="password" autocomplete="off"/>
-          <el-input v-model="registerForm.confirmPassword" :placeholder="$t('confirmPwd')" type="password"
-                    autocomplete="off"/>
+          <el-input v-model="registerForm.password" name="new-password" :placeholder="$t('password')" type="password" show-password
+                    autocomplete="new-password"/>
+          <el-input v-model="registerForm.confirmPassword" name="confirm-password" :placeholder="$t('confirmPwd')" type="password" show-password
+                    autocomplete="new-password"/>
           <el-input v-if="settingStore.settings.regKey === 0" v-model="registerForm.code" :placeholder="$t('regKey')"
                     type="text" autocomplete="off"/>
           <el-input v-if="settingStore.settings.regKey === 2" v-model="registerForm.code"
@@ -91,13 +97,13 @@
           >
             <span style="font-size: 12px;color: #F56C6C" v-if="botJsError">{{ $t('verifyModuleFailed') }}</span>
           </div>
-          <el-button class="btn" style="margin: 0" type="primary" @click="submitRegister" :loading="registerLoading"
+          <el-button class="btn" style="margin: 0" type="primary" native-type="submit" :loading="registerLoading"
           >{{ $t('regBtn') }}
           </el-button>
           <el-button v-if="settingStore.settings.linuxdoSwitch" class="btn" style="margin-top: 10px"  @click="linuxDoLogin">
             <el-avatar src="/image/linuxdo.webp" :size="18" style="margin-right: 10px" />LinuxDo
           </el-button>
-        </div>
+        </form>
         <template v-if="settingStore.settings.register === 0">
           <div class="switch" @click="show = 'register'" v-if="show === 'login'">{{ $t('noAccount') }}
             <span>{{ $t('regSwitch') }}</span></div>
@@ -124,7 +130,7 @@
                     :value="item"
                 />
               </el-select>
-              <div>
+              <div class="suffix-btn" role="button" tabindex="0" :aria-label="$t('select')" @keydown.enter.prevent="openSelect" @keydown.space.prevent="openSelect">
                 <span>{{ suffix }}</span>
                 <Icon class="setting-icon" icon="mingcute:down-small-fill" width="20" height="20"/>
               </div>
@@ -146,7 +152,7 @@
 
 <script setup>
 import router from "@/router";
-import {computed, nextTick, reactive, ref} from "vue";
+import {computed, nextTick, onMounted, reactive, ref} from "vue";
 import {login} from "@/request/login.js";
 import {register} from "@/request/login.js";
 import {websiteConfig} from "@/request/setting.js";
@@ -194,7 +200,21 @@ const registerForm = reactive({
 })
 const domainList = settingStore.domainList;
 const registerLoading = ref(false)
-suffix.value = domainList[0]
+// Start on the domain this browser used last time
+let lastDomain = null
+try { lastDomain = localStorage.getItem('lastDomain') } catch (e) {}
+suffix.value = domainList.includes(lastDomain) ? lastDomain : domainList[0]
+const emailInput = ref(null)
+const capsOn = ref(false)
+
+function checkCaps(e) {
+  capsOn.value = !!e.getModifierState?.('CapsLock')
+}
+
+onMounted(() => {
+  // A phone would open its keyboard over the form, so only focus on larger screens
+  if (window.innerWidth >= 768) nextTick(() => emailInput.value?.focus())
+})
 const verifyShow = ref(false)
 let verifyToken = ''
 let turnstileId = null
@@ -232,7 +252,8 @@ window.loadBefore = (e) => {
 
 const loginOpacity = computed(() => {
   const opacity = settingStore.settings.loginOpacity
-  return uiStore.dark ? `rgba(0, 0, 0, ${opacity})` : `rgba(255, 255, 255, ${opacity})`
+  // The dark panel uses the app's own dark surface, not pure black
+  return uiStore.dark ? `rgba(20, 20, 20, ${opacity})` : `rgba(255, 255, 255, ${opacity})`
 })
 
 const loginDarkenFactor = computed(() => {
@@ -412,6 +433,7 @@ const submit = () => {
 
   loginLoading.value = true
   login(email, form.password).then(async data => {
+    try { if (!hideLoginDomain.value) localStorage.setItem('lastDomain', suffix.value) } catch (e) {}
     await saveToken(data.token)
   }).finally(() => {
     loginLoading.value = false
@@ -597,6 +619,25 @@ function submitRegister() {
 
 
 <style>
+/* Night sky when the app is dark, so the left side does not stay a bright daytime blue beside a dark form */
+html.dark #login-box {
+  background: linear-gradient(to bottom, #07131f, #11304d 55%, #141414);
+}
+
+html.dark #login-box .cloud {
+  background: linear-gradient(to bottom, #5a6f86 5%, #44566a 100%);
+  opacity: 0.5;
+  box-shadow: none;
+}
+
+html.dark #login-box .cloud:after,
+html.dark #login-box .cloud:before {
+  background: #5a6f86;
+}
+
+html.dark #login-box .brand-logo {
+  color: #4aa8ff;
+}
 .el-select-dropdown__item {
   padding: 0 15px;
 }
@@ -650,9 +691,34 @@ function submitRegister() {
   }
 
   .btn {
-    height: 36px;
+    height: 42px;
     width: 100%;
-    border-radius: 6px;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+  }
+
+  .brand-logo {
+    width: 44px;
+    height: 44px;
+    margin-bottom: 8px;
+    color: #1890ff;
+    flex-shrink: 0;
+  }
+
+  .caps-hint {
+    margin: -8px 0 12px;
+    font-size: 12px;
+    color: var(--el-color-warning);
+  }
+
+  .suffix-btn {
+    border-radius: 4px;
+
+    &:focus-visible {
+      outline: 2px solid var(--el-color-primary);
+      outline-offset: 2px;
+    }
   }
 
   .form-desc {
@@ -663,7 +729,7 @@ function submitRegister() {
 
   .form-title {
     font-weight: bold;
-    font-size: 22px !important;
+    font-size: 24px !important;
   }
 
   .switch {
@@ -677,22 +743,22 @@ function submitRegister() {
   }
 
   :deep(.el-input__wrapper) {
-    border-radius: 6px;
+    border-radius: 8px;
     background: var(--el-bg-color);
   }
 
   .email-input :deep(.el-input__wrapper) {
-    border-radius: 6px 0 0 6px;
+    border-radius: 8px 0 0 8px;
     background: var(--el-bg-color);
   }
 
   .el-input {
-    height: 38px;
+    height: 42px;
     width: 100%;
-    margin-bottom: 18px;
+    margin-bottom: 16px;
 
     :deep(.el-input__inner) {
-      height: 36px;
+      height: 40px;
     }
   }
 }
@@ -746,6 +812,7 @@ function submitRegister() {
   border-radius: 0 8px 8px 0;
 }
 
+
 :deep(.el-button+.el-button) {
   margin: 0;
 }
@@ -774,7 +841,8 @@ function submitRegister() {
 
 #login-box {
   background: linear-gradient(to bottom, #2980b9, #6dd5fa, #fff);
-  font: 100% Arial, sans-serif;
+  font: inherit;
+  font-size: 14px;
   height: 100%;
   margin: 0;
   padding: 0;

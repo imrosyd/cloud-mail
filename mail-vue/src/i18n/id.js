@@ -226,6 +226,7 @@ const id = {
     turnstileKeysFirst: 'Isi Site Key dan Secret Key terlebih dahulu',
     confirmStopReceive: 'Berhenti menerima surat? Surat masuk akan ditolak sampai Anda menyalakannya lagi.',
     confirmStopSend: 'Berhenti mengirim surat? Tidak ada yang bisa mengirim sampai Anda menyalakannya lagi.',
+    capsLockOn: 'Caps Lock aktif',
     composeEmail: 'Tulis email',
     collapseSidebar: 'Ciutkan sidebar',
     expandSidebar: 'Lebarkan sidebar',
