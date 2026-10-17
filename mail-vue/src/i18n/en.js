@@ -109,7 +109,7 @@ const en = {
     history: 'History',
     addRegKey: 'Add Invite Code',
     regKey: 'Invite Code',
-    noCodeFound: 'No messages found',
+    noCodeFound: 'No invite codes yet',
     useHistory: 'Usage History',
     date: 'Date',
     roleDesc: 'Role',

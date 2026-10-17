@@ -109,7 +109,7 @@ const id = {
     history: 'Riwayat',
     addRegKey: 'Tambah Kode Undangan',
     regKey: 'Kode Undangan',
-    noCodeFound: 'Tidak ada pesan ditemukan',
+    noCodeFound: 'Belum ada kode undangan',
     useHistory: 'Riwayat Penggunaan',
     date: 'Tanggal',
     roleDesc: 'Peran',
