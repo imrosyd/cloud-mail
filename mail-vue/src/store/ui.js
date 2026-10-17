@@ -3,6 +3,8 @@ import { defineStore } from 'pinia'
 export const useUiStore = defineStore('ui', {
     state: () => ({
         asideShow: window.innerWidth > 1024,
+        // Desktop sidebar: full width with labels, or a narrow icon rail
+        asideWide: true,
         accountShow: false,
         backgroundLoading: true,
         changeNotice: 0,
@@ -34,6 +36,6 @@ export const useUiStore = defineStore('ui', {
         }
     },
     persist: {
-        pick: ['accountShow','dark','listLayout','listWidth','listHeight','blockRemoteImages'],
+        pick: ['asideWide','accountShow','dark','listLayout','listWidth','listHeight','blockRemoteImages'],
     },
 })

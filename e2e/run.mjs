@@ -222,7 +222,7 @@ await test('the question mark key opens the shortcut list', async () => {
 })
 
 await test('the compose window lets you pick which address to send from', async () => {
-  await qa.locator('.writer-box').click()
+  await qa.locator('.compose-btn').click()
   await qa.waitForSelector('.sender-select', {timeout: 5000})
   await qa.locator('.sender-select').click()
   await qa.waitForTimeout(700)

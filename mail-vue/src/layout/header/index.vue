@@ -1,10 +1,12 @@
 <template>
-  <div class="header" :class="!hasPerm('email:send') ? 'not-send' : ''">
-    <div class="header-btn">
-      <hanburger :is-active="uiStore.asideShow" @click="changeAside"></hanburger>
+  <div class="header" :class="(!hasPerm('email:send') || !isMobile) ? 'not-send' : ''">
+    <div class="header-btn" :class="{'no-toggle': !isMobile}">
+      <!-- The sidebar is always open on desktop, so the toggle only exists where it is a drawer -->
+      <hanburger v-if="isMobile" :is-active="uiStore.asideShow" @click="changeAside"></hanburger>
       <span class="breadcrumb-item">{{ $t(route.meta.title) }}</span>
     </div>
-    <div v-perm="'email:send'" class="writer-box" @click="openSend">
+    <!-- On desktop the sidebar has the compose button -->
+    <div v-if="isMobile" v-perm="'email:send'" class="writer-box" @click="openSend">
       <div class="writer">
         <Icon icon="material-symbols:edit-outline-sharp" width="22" height="22"/>
       </div>
@@ -78,6 +80,7 @@ import {useUiStore} from "@/store/ui.js";
 import {useUserStore} from "@/store/user.js";
 import {useRoute} from "vue-router";
 import {computed, ref} from "vue";
+import {useIsMobile} from "@/composables/useIsMobile.js";
 import {useSettingStore} from "@/store/setting.js";
 import {hasPerm} from "@/perm/perm.js"
 import {useI18n} from "vue-i18n";
@@ -90,6 +93,7 @@ const route = useRoute();
 const settingStore = useSettingStore();
 const userStore = useUserStore();
 const uiStore = useUiStore();
+const isMobile = useIsMobile()
 const logoutLoading = ref(false)
 const userInfoShow = ref(false)
 const userinfoRef = ref({})
@@ -373,6 +377,10 @@ function formatName(email) {
       font-weight: bold;;
     }
   }
+}
+
+.header-btn.no-toggle {
+  padding-left: 18px;
 }
 
 .header-btn {
