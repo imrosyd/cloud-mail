@@ -45,7 +45,7 @@
       </div>
     </section>
 
-    <section class="section">
+    <section class="section notify">
       <h2 class="title">{{$t('newEmailNotify')}}</h2>
       <div class="card">
         <div class="row">
@@ -62,7 +62,7 @@
       </div>
     </section>
 
-    <section class="section">
+    <section class="section notify">
       <h2 class="title">{{$t('privacy')}}</h2>
       <div class="card">
         <div class="row">
@@ -75,7 +75,7 @@
       </div>
     </section>
 
-    <section class="section danger" v-perm="'my:delete'">
+    <section class="section danger del-email" v-perm="'my:delete'">
       <h2 class="title">{{$t('deleteUser')}}</h2>
       <div class="card">
         <div class="row">
