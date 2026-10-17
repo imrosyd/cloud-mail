@@ -30,7 +30,7 @@
           <Icon icon="lucide:x" width="18" height="18"/>
         </button>
       </div>
-      <div class="container">
+      <div class="container" :style="{gridTemplateRows: containerRows}">
         <el-input-tag  @add-tag="addTagChange" tag-type="primary" @input="inputChange" size="default" v-model="form.receiveEmail" >
           <template #prefix>
             <div class="item-title" >{{ $t('recipient') }}</div>
@@ -54,16 +54,26 @@
             </el-select>
           </template>
           <template #suffix>
-            <div style="display: flex;margin-right: 3px;">
+            <div style="display: flex;align-items: center;gap: 10px;margin-right: 3px;">
+              <button type="button" class="cc-toggle" :class="{on: showCc}" :aria-pressed="showCc" @click.stop="showCc = !showCc">{{ $t('ccBcc') }}</button>
               <Icon icon="fa7-solid:user-plus" width="20" height="20" class="add-contact" @click.stop="openContacts" />
             </div>
           </template>
+        </el-input-tag>
+        <el-input-tag v-if="showCc" @add-tag="val => addTagTo('cc', val)" tag-type="primary" size="default" v-model="form.cc">
+          <template #prefix><div class="item-title">{{ $t('cc') }}</div></template>
+        </el-input-tag>
+        <el-input-tag v-if="showCc" @add-tag="val => addTagTo('bcc', val)" tag-type="primary" size="default" v-model="form.bcc">
+          <template #prefix><div class="item-title">{{ $t('bcc') }}</div></template>
         </el-input-tag>
         <el-input v-model="form.subject" :placeholder="t('subject')" />
         <tinyEditor :def-value="defValue" ref="editor" @change="change" @focus="focusChange" />
         <div class="button-item">
           <button type="button" class="tool-btn att-add" :title="$t('attachFiles')" :aria-label="$t('attachFiles')" @click="chooseFile">
             <Icon icon="lucide:paperclip" width="19" height="19"/>
+          </button>
+          <button type="button" class="tool-btn att-draft" :title="$t('saveDraft')" :aria-label="$t('saveDraft')" @click="saveDraft">
+            <Icon icon="lucide:save" width="19" height="19"/>
           </button>
           <button type="button" class="tool-btn att-clear" :title="$t('clearMessage')" :aria-label="$t('clearMessage')" @click="clearContent">
             <Icon icon="lucide:eraser" width="19" height="19"/>
@@ -164,6 +174,8 @@ const backReply = reactive({
 const form = reactive({
   sendEmail: '',
   receiveEmail: [],
+  cc: [],
+  bcc: [],
   accountId: -1,
   name: '',
   subject: '',
@@ -176,6 +188,11 @@ const form = reactive({
 })
 
 const selectRecipientList = ref([])
+
+// Cc and Bcc rows stay hidden until asked for, or until a draft already has them
+const showCc = ref(false)
+// To, optional Cc and Bcc, subject: fixed rows; the editor takes the rest; then the button bar
+const containerRows = computed(() => `auto ${showCc.value ? 'auto auto ' : ''}auto 1fr auto`)
 
 // Addresses this user can send from; loaded when the sender dropdown opens or a window is opened
 const senders = ref([])
@@ -314,6 +331,21 @@ function addTagChange(val) {
   if (selectStatus && has) openSelect()
 }
 
+// Same parsing as the To field: split on commas, keep valid unique addresses, drop the raw text that was typed
+function addTagTo(field, val) {
+  const emails = Array.from(new Set(
+      val.split(/[,，]/).map(item => item.trim()).filter(item => item)
+  ));
+
+  form[field].splice(form[field].length - 1, 1)
+
+  emails.forEach(email => {
+    if (isEmail(email) && !form[field].includes(email)) {
+      form[field].push(email)
+    }
+  })
+}
+
 function clearContent() {
   ElMessageBox.confirm(t('clearContentConfirm'), {
     confirmButtonText: t('confirm'),
@@ -438,6 +470,8 @@ async function sendEmail() {
       form.subject = ''
       form.content = ''
       form.receiveEmail = []
+      form.cc = []
+      form.bcc = []
       draftStore.setDraft = {...toRaw(form)}
     }
 
@@ -464,16 +498,20 @@ async function sendEmail() {
 }
 
 function addRecipientRecord() {
+  const everyone = [...form.receiveEmail, ...form.cc, ...form.bcc]
   writerStore.sendRecipientRecord = writerStore.sendRecipientRecord.filter(
-      email => !form.receiveEmail.includes(email)
+      email => !everyone.includes(email)
   );
 
-  writerStore.sendRecipientRecord.unshift(...form.receiveEmail);
+  writerStore.sendRecipientRecord.unshift(...everyone);
   writerStore.sendRecipientRecord = writerStore.sendRecipientRecord.slice(0, 500);
 }
 
 function resetForm() {
   form.receiveEmail = []
+  form.cc = []
+  form.bcc = []
+  showCc.value = false
   form.subject = ''
   form.content = ''
   form.manyType = null
@@ -597,6 +635,10 @@ function open(preferredAccountId = null) {
 
 function openDraft(draft) {
   Object.assign(form, {...draft})
+  // Drafts saved before Cc and Bcc existed have neither
+  form.cc = draft.cc || []
+  form.bcc = draft.bcc || []
+  showCc.value = form.cc.length > 0 || form.bcc.length > 0
   defValue.value = ''
   setTimeout(() => defValue.value = form.content)
   show.value = true;
@@ -621,6 +663,43 @@ onUnmounted(() => {
   window.removeEventListener('keydown', handleKeyDown);
 });
 
+// Store the open message as a new draft and close the window
+async function persistDraft() {
+  const formData = {...toRaw(form)};
+  delete formData.draftId
+  delete formData.attachments
+  formData.createTime = dayjs().utc().format('YYYY-MM-DD HH:mm:ss');
+  const draftId = await db.value.draft.add({...formData})
+  db.value.att.add({draftId, attachments: toRaw(form.attachments)})
+  draftStore.refreshList++
+  show.value = false
+  await nextTick(() => {
+    resetForm()
+  })
+}
+
+// Explicit save: no question asked, unlike closing the window
+async function saveDraft() {
+  if (!form.content) {
+    form.content = editor.value.getContent();
+  }
+
+  if (!(form.content || form.subject || form.receiveEmail.length > 0 || form.cc.length > 0 || form.bcc.length > 0)) {
+    ElMessage({message: t('nothingToSave'), type: 'info', plain: true})
+    return
+  }
+
+  if (form.draftId) {
+    draftStore.setDraft = {...toRaw(form)}
+    show.value = false
+    resetForm()
+  } else {
+    await persistDraft()
+  }
+
+  ElMessage({message: t('draftSaved'), type: 'success', plain: true})
+}
+
 function close() {
 
   if (selectStatus) openSelect();
@@ -636,7 +715,7 @@ function close() {
     return;
   }
 
-  if (!(form.content || form.subject || form.receiveEmail.length > 0)) {
+  if (!(form.content || form.subject || form.receiveEmail.length > 0 || form.cc.length > 0 || form.bcc.length > 0)) {
     show.value = false
     resetForm()
     return;
@@ -662,17 +741,7 @@ function close() {
     type: 'warning',
     distinguishCancelAndClose: true
   }).then(async () => {
-    const formData = {...toRaw(form)};
-    delete formData.draftId
-    delete formData.attachments
-    formData.createTime = dayjs().utc().format('YYYY-MM-DD HH:mm:ss');
-    const draftId = await db.value.draft.add({...formData})
-    db.value.att.add({draftId, attachments: toRaw(form.attachments)})
-    draftStore.refreshList++
-    show.value = false
-    await nextTick(() => {
-      resetForm()
-    })
+    await persistDraft()
   }).catch((action) => {
     if (action === 'cancel') {
       show.value = false
@@ -904,7 +973,7 @@ function close() {
 
       .button-item {
         display: grid;
-        grid-template-columns: auto auto 1fr auto;
+        grid-template-columns: auto auto auto 1fr auto;
 
         align-items: center;
         padding-top: 12px;
@@ -932,7 +1001,8 @@ function close() {
           }
         }
 
-        .att-clear {
+        .att-clear,
+        .att-draft {
           margin-left: 2px;
         }
 
@@ -996,6 +1066,24 @@ function close() {
   display: flex;
   justify-content: end;
   margin-top: 10px;
+}
+
+.cc-toggle {
+  all: unset;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--el-text-color-secondary);
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: color .15s, background-color .15s;
+
+  &:hover, &.on {
+    color: var(--el-color-primary);
+  }
+
+  &:focus-visible {
+    background: var(--el-fill-color);
+  }
 }
 
 .add-contact {

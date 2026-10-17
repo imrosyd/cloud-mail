@@ -44,6 +44,14 @@
             <span class="meta-label">{{ $t('recipient') }}</span>
             <span class="meta-value">{{ recipients }}</span>
           </div>
+          <div class="meta-row" v-if="ccList">
+            <span class="meta-label">{{ $t('cc') }}</span>
+            <span class="meta-value">{{ ccList }}</span>
+          </div>
+          <div class="meta-row" v-if="bccList">
+            <span class="meta-label">{{ $t('bcc') }}</span>
+            <span class="meta-value">{{ bccList }}</span>
+          </div>
           <div class="meta-row date">{{ formatDetailDate(email.createTime) }}</div>
         </div>
         <el-alert v-if="email.status === 3" :closable="false" :title="failMessage" class="alert" type="error" show-icon/>
@@ -113,6 +121,18 @@ const recipients = computed(() => {
     return props.email.toEmail || ''
   }
 })
+
+// Cc and Bcc are stored as JSON lists of {address, name}; mail without them has an empty list
+function addressList(json) {
+  try {
+    return JSON.parse(json || '[]').map(item => item.address).join(', ')
+  } catch (e) {
+    return ''
+  }
+}
+
+const ccList = computed(() => addressList(props.email.cc))
+const bccList = computed(() => addressList(props.email.bcc))
 
 const failMessage = computed(() => {
   try {

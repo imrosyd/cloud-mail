@@ -28,6 +28,8 @@
                 </div>
               </div>
               <div class="receive"><span class="source">{{$t('recipient')}}</span><span class="receive-email">{{  formateReceive(email.recipient) }}</span></div>
+              <div class="receive" v-if="formateReceive(email.cc)"><span class="source">{{$t('cc')}}</span><span class="receive-email">{{ formateReceive(email.cc) }}</span></div>
+              <div class="receive" v-if="formateReceive(email.bcc)"><span class="source">{{$t('bcc')}}</span><span class="receive-email">{{ formateReceive(email.bcc) }}</span></div>
               <div class="date">
                 <div>{{ formatDetailDate(email.createTime) }}</div>
               </div>
@@ -164,7 +166,7 @@ function isImage(filename) {
 
 function formateReceive(recipient) {
   try {
-    return JSON.parse(recipient).map(item => item.address).join(', ')
+    return JSON.parse(recipient || '[]').map(item => item.address).join(', ')
   } catch (e) {
     return ''
   }
