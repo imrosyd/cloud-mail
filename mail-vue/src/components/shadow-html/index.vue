@@ -80,15 +80,6 @@ function updateContent() {
         max-width: 100%;
       }
 
-      ${uiStore.dark ? `
-      /* dark theme: invert the light email, then flip media back so it keeps its colours */
-      .shadow-content {
-        background: #E2E2E2;
-        filter: invert(1) hue-rotate(180deg);
-      }
-      img, video, picture {
-        filter: invert(1) hue-rotate(180deg);
-      }` : ''}
 
       img:not(table img) {
         max-width: 100%;
@@ -96,12 +87,36 @@ function updateContent() {
       }
 
     </style>
+    <style class="theme"></style>
     <div class="shadow-content">
       ${cleanedHtml}
     </div>
   `;
 
   openLinksInNewTab();
+  applyTheme();
+}
+
+// Background of the first element that paints one, as [r, g, b]; null when the email sets none
+function emailBackground(root) {
+  for (const el of root.querySelectorAll('*')) {
+    const m = getComputedStyle(el).backgroundColor.match(/[\d.]+/g)
+    if (m && (m[3] ?? 1) > 0.5) return m.slice(0, 3).map(Number)
+  }
+  return null
+}
+
+// Dark theme: invert a light email, but leave one that already paints a dark background
+function applyTheme() {
+  const theme = shadowRoot.querySelector('.theme')
+  if (!uiStore.dark) return
+  const root = shadowRoot.querySelector('.shadow-content')
+  const bg = emailBackground(root)
+  const dark = bg && (0.299 * bg[0] + 0.587 * bg[1] + 0.114 * bg[2]) < 110
+  theme.textContent = dark
+    ? '.shadow-content { background: #1C1C1C; }'
+    : `.shadow-content { background: #E2E2E2; filter: invert(1) hue-rotate(180deg); }
+       img, video, picture { filter: invert(1) hue-rotate(180deg); }`
 }
 
 // Links in an email open in a new tab instead of replacing the app
