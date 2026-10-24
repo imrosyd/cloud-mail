@@ -27,7 +27,10 @@ function updateContent() {
   const bodyStyle = bodyStyleMatch ? bodyStyleMatch[1] : '';
 
         // 2. Remove <body> tags (keep content)
-  const cleanedHtml = props.html.replace(/<\/?body[^>]*>/gi, '');
+  // <style> rules aimed at body only work if they target our wrapper instead
+  const cleanedHtml = props.html
+    .replace(/<\/?body[^>]*>/gi, '')
+    .replace(/<style[\s\S]*?<\/style>/gi, css => css.replace(/(^|[}>,\s])body(?=\s*[{,])/gi, '$1.shadow-content'));
 
         // 3. Apply body style to .shadow-content
   shadowRoot.innerHTML = `
@@ -65,7 +68,7 @@ function updateContent() {
         height: fit-content;
         box-sizing: border-box;
         overflow-wrap: anywhere;
-        \${bodyStyle ? bodyStyle : ''} /* Inject body style */
+        ${bodyStyle} /* Inject body style */
       }
 
       table {
