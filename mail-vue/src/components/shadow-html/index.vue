@@ -60,10 +60,16 @@ function updateContent() {
 
       .shadow-content {
         background: #FFFFFF;
-        width: fit-content;
+        width: 100%;
+        max-width: 100%;
         height: fit-content;
-        min-width: 100%;
+        box-sizing: border-box;
+        overflow-wrap: anywhere;
         \${bodyStyle ? bodyStyle : ''} /* Inject body style */
+      }
+
+      table {
+        max-width: 100%;
       }
 
       img:not(table img) {
@@ -90,34 +96,13 @@ function openLinksInNewTab() {
   });
 }
 
-function autoScale() {
-  if (!shadowRoot || !contentBox.value) return
-
-  const parent = contentBox.value
-  const shadowContent = shadowRoot.querySelector('.shadow-content')
-
-  if (!shadowContent) return
-
-  const parentWidth = parent.offsetWidth
-  const childWidth = shadowContent.scrollWidth
-
-  if (childWidth === 0) return
-
-  const scale = parentWidth / childWidth
-
-  const hostElement = shadowRoot.host
-  hostElement.style.zoom = scale
-}
-
 onMounted(() => {
   shadowRoot = container.value.attachShadow({ mode: 'open' })
   updateContent()
-  autoScale()
 })
 
 watch(() => props.html, () => {
   updateContent()
-  autoScale()
 })
 </script>
 
