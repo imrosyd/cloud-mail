@@ -6,6 +6,7 @@
 
 <script setup>
 import { ref, onMounted, watch } from 'vue'
+import { useUiStore } from '@/store/ui.js'
 
 const props = defineProps({
   html: {
@@ -14,6 +15,7 @@ const props = defineProps({
   }
 })
 
+const uiStore = useUiStore()
 const container = ref(null)
 const contentBox = ref(null)
 let shadowRoot = null
@@ -78,6 +80,16 @@ function updateContent() {
         max-width: 100%;
       }
 
+      ${uiStore.dark ? `
+      /* dark theme: invert the light email, then flip media back so it keeps its colours */
+      .shadow-content {
+        background: #E2E2E2;
+        filter: invert(1) hue-rotate(180deg);
+      }
+      img, video, picture {
+        filter: invert(1) hue-rotate(180deg);
+      }` : ''}
+
       img:not(table img) {
         max-width: 100%;
         height: auto !important;
@@ -107,7 +119,7 @@ onMounted(() => {
   updateContent()
 })
 
-watch(() => props.html, () => {
+watch(() => [props.html, uiStore.dark], () => {
   updateContent()
 })
 </script>
